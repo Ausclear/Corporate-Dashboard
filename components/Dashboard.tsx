@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase-browser";
 import {
   GOLD, GOLD_DIM, GOLD_BORDER, BG, CARD, INPUT, TEXT, TEXT2, MUTED, BORDER,
   GREEN, GREEN_DIM, AMBER, AMBER_DIM,
@@ -45,6 +47,14 @@ export default function Dashboard() {
   const [personnelFilter, setPersonnelFilter] = useState("All");
   const [showLogout, setShowLogout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700);
@@ -418,7 +428,7 @@ export default function Dashboard() {
                 flex: 1, padding: "12px", background: INPUT, border: `1px solid ${BORDER}`,
                 borderRadius: 10, color: TEXT2, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
               }}>Cancel</button>
-              <button onClick={() => setShowLogout(false)} style={{
+              <button onClick={handleSignOut} style={{
                 flex: 1, padding: "12px", background: `linear-gradient(135deg, ${GOLD}, #b8942e)`,
                 border: "none", borderRadius: 10, color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
               }}>Sign Out</button>
