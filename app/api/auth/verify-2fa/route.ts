@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       .single();
 
     if (!user || !user.totp_secret) {
-      return NextResponse.json({ valid: false, error: "2FA not set up" });
+      return NextResponse.json({ valid: false, error: "2FA not configured for this account." });
     }
 
     const totp = new OTPAuth.TOTP({
@@ -37,19 +37,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ valid: false, error: "Invalid code. Please try again." });
     }
 
-    // If 2FA wasn't enabled yet, enable it now (first successful verification)
+    // Enable 2FA on first successful verification
     if (!user.totp_enabled) {
-      await supabase
-        .from("corporate_users")
-        .update({ totp_enabled: true })
-        .eq("id", user.id);
+      await supabase.from("corporate_users").update({ totp_enabled: true }).eq("id", user.id);
     }
 
-    // Update last login
-    await supabase
-      .from("corporate_users")
-      .update({ last_login: new Date().toISOString() })
-      .eq("id", user.id);
+    // Update last login timestamp
+    await supabase.from("corporate_users").update({ last_login: new Date().toISOString() }).eq("id", user.id);
 
     return NextResponse.json({
       valid: true,
