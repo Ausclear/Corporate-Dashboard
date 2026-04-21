@@ -17,6 +17,8 @@ export async function POST(req: Request) {
       .eq("email", email.toLowerCase().trim())
       .single();
 
+    // If user not in corporate_users table, they still authenticated via Supabase Auth
+    // but may not have a corporate profile yet — treat as 2FA not set up
     return NextResponse.json({ enabled: data?.totp_enabled || false });
   } catch {
     return NextResponse.json({ enabled: false });
