@@ -323,53 +323,100 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* ── EMAIL OTP ── */}
+              {/* ── EMAIL OTP — exact client portal ── */}
               {step === "email-confirmation" && (
                 <div className="space-y-6 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-portal-gold rounded-2xl shadow-lg shadow-portal-gold/20 mb-4">
+                    <Mail className="w-8 h-8 text-white" />
+                  </div>
+
                   <div>
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-portal-gold rounded-2xl shadow-lg shadow-portal-gold/20 mb-4">
-                      <Mail className="w-8 h-8 text-white" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-portal-gold mb-3">Check Your Email</h2>
-                    <p className="text-portal-text-muted mb-1">We&apos;ve sent a verification code to:</p>
-                    <p className="text-lg font-semibold text-portal-gold">{email}</p>
+                    <h2 className="text-2xl font-serif font-bold text-portal-gold mb-3">Check Your Email</h2>
+                    <p className="text-portal-text-muted mb-2">
+                      We&apos;ve sent an 8-digit verification code to:
+                    </p>
+                    <p className="text-lg font-semibold text-portal-gold mb-4">
+                      {email}
+                    </p>
                   </div>
 
                   <div className="bg-green-500/10 border-l-4 border-green-500 p-4 rounded-r-xl text-left">
-                    <p className="text-sm text-green-300 font-semibold mb-1">✓ Account Created &amp; 2FA Enabled</p>
-                    <p className="text-sm text-green-400">Enter the code from your email below to activate your account and sign in.</p>
+                    <p className="text-sm text-green-300 font-semibold mb-2">
+                      ✓ Account Created Successfully
+                    </p>
+                    <p className="text-sm text-green-400">
+                      Enter the 8-digit code from your email below to activate your account and sign in.
+                    </p>
                   </div>
 
                   {resendSuccess && (
-                    <div className="bg-blue-500/10 border-l-4 border-blue-500 p-4 rounded-r-xl text-left">
-                      <p className="text-sm text-portal-text-muted font-medium">✓ {resendSuccess}</p>
+                    <div className="bg-blue-500/10 border-l-4 border-blue-500 p-4 rounded-r-xl">
+                      <p className="text-sm text-portal-text-muted font-medium">
+                        ✓ {resendSuccess}
+                      </p>
                     </div>
                   )}
 
-                  <form onSubmit={handleVerifyEmailOtp} className="space-y-5 text-left">
+                  <form onSubmit={handleVerifyEmailOtp} className="space-y-5">
                     <div>
-                      <label className="block text-sm font-semibold text-portal-gold mb-2">Verification Code</label>
-                      <input ref={otpRef} type="text" value={emailOtpCode}
-                        onChange={e => setEmailOtpCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                        className="w-full px-4 py-4 bg-portal-input border border-portal-border rounded-xl focus:ring-2 focus:ring-portal-gold-soft focus:border-portal-gold-border outline-none transition-all text-center text-3xl font-mono tracking-[0.4em] text-portal-text-primary"
-                        placeholder="00000000" maxLength={8} autoComplete="one-time-code" required />
+                      <label htmlFor="emailOtpCode" className="block text-sm font-semibold text-portal-gold mb-2">
+                        Verification Code
+                      </label>
+                      <input
+                        id="emailOtpCode"
+                        ref={otpRef}
+                        type="text"
+                        value={emailOtpCode}
+                        onChange={e => setEmailOtpCode(e.target.value.replace(/\D/g, ""))}
+                        className="w-full px-4 py-4 bg-portal-input border border-portal-border rounded-xl focus:ring-2 focus:ring-portal-gold-soft focus:border-portal-gold-border outline-none transition-all text-center text-3xl font-mono tracking-[0.5em] text-portal-text-primary"
+                        placeholder="00000000"
+                        maxLength={8}
+                        autoComplete="one-time-code"
+                        autoFocus
+                        required
+                        disabled={loading}
+                      />
                     </div>
-                    <button type="submit" disabled={loading || emailOtpCode.length < 6}
-                      className="w-full bg-portal-gold hover:bg-portal-gold/90 text-[#0b0b0f] font-semibold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 shadow-lg shadow-portal-gold/20">
+
+                    <button
+                      type="submit"
+                      disabled={loading || emailOtpCode.length !== 8}
+                      className="w-full bg-portal-gold hover:from-amber-600 hover:to-amber-700 text-[#0b0b0f] font-semibold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 shadow-lg shadow-portal-gold/20 hover:shadow-xl hover:shadow-portal-gold/20"
+                    >
                       {loading ? (
-                        <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Verifying...</span></>
-                      ) : <span>Verify &amp; Sign In</span>}
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Verifying...</span>
+                        </>
+                      ) : (
+                        <span>Verify &amp; Sign In</span>
+                      )}
                     </button>
                   </form>
 
                   <div className="pt-4 border-t border-portal-border">
-                    <button type="button" onClick={handleResend} disabled={resendLoading}
-                      className="w-full bg-portal-input text-portal-gold font-semibold py-3 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={resendLoading}
+                      className="w-full bg-portal-input hover:bg-portal-input text-portal-gold font-semibold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
                       {resendLoading ? (
-                        <><div className="w-4 h-4 border-2 border-portal-gold-border border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
-                      ) : <><Mail className="w-4 h-4" /><span>Resend Verification Email</span></>}
+                        <>
+                          <div className="w-4 h-4 border-2 border-portal-gold-border border-t-transparent rounded-full animate-spin" />
+                          <span>Sending...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4" />
+                          <span>Resend Verification Email</span>
+                        </>
+                      )}
                     </button>
-                    <p className="text-xs text-portal-text-muted mt-3">Didn&apos;t receive the email? Check your spam folder or try resending.</p>
+                  </div>
+
+                  <div className="text-xs text-portal-text-muted text-center">
+                    <p>Didn&apos;t receive the email? Check your spam folder or try resending.</p>
                   </div>
                 </div>
               )}
