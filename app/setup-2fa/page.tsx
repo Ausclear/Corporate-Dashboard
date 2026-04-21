@@ -2,25 +2,16 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
-const G = "#c9a84c";
-const GB = "rgba(201,168,76,0.35)";
-const BG = "#07070a";
-const C = "#202028";
-const I = "#16161c";
-const T = "#e8e6e1";
-const T2 = "#9a9898";
-const M = "#6b6969";
-const B = "rgba(255,255,255,0.06)";
-const R = "#c0392b";
+import { Lock, Smartphone, Shield, Copy, Check } from "lucide-react";
 
 function Setup2FAContent() {
   const [qrUrl, setQrUrl] = useState("");
   const [secret, setSecret] = useState("");
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [code, setCode] = useState(["","","","","",""]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [copied, setCopied] = useState(false);
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
   const params = useSearchParams();
@@ -48,22 +39,18 @@ function Setup2FAContent() {
 
   const handleInput = (i: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
-    const next = [...code]; next[i] = value.slice(-1);
-    setCode(next);
+    const next = [...code]; next[i] = value.slice(-1); setCode(next);
     if (value && i < 5) refs.current[i + 1]?.focus();
     if (next.every(d => d) && next.join("").length === 6) verify(next.join(""));
   };
-
   const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[i] && i > 0) refs.current[i - 1]?.focus();
   };
-
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const p = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (p.length === 6) { setCode(p.split("")); refs.current[5]?.focus(); verify(p); }
   };
-
   const verify = async (c: string) => {
     setError(""); setLoading(true);
     try {
@@ -74,110 +61,136 @@ function Setup2FAContent() {
       const data = await res.json();
       if (!data.valid) {
         setError(data.error || "Invalid code. Please try again.");
-        setCode(["", "", "", "", "", ""]); refs.current[0]?.focus();
-      } else {
-        router.push("/dashboard");
-      }
+        setCode(["","","","","",""]); refs.current[0]?.focus();
+      } else { router.push("/dashboard"); }
     } catch { setError("Verification failed."); }
     setLoading(false);
   };
-
-  const codeBox: React.CSSProperties = {
-    width: 44, height: 52, background: I, border: `1px solid ${B}`, borderRadius: 10,
-    textAlign: "center", fontSize: 22, fontWeight: 700, color: T, outline: "none", fontFamily: "Georgia, serif",
+  const copySecret = () => {
+    navigator.clipboard.writeText(secret);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
-  if (fetching) {
-    return (
-      <div style={{ textAlign: "center", padding: 40 }}>
-        <div style={{ width: 40, height: 40, border: `3px solid ${B}`, borderTopColor: G, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-        <p style={{ color: T2, fontSize: 14 }}>Generating your 2FA setup...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  if (fetching) return (
+    <div className="text-center py-10">
+      <div className="w-10 h-10 border-2 border-portal-border border-t-portal-gold rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-portal-text-muted text-sm">Generating your 2FA setup...</p>
+    </div>
+  );
 
   return (
-    <div>
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: 20, color: T, margin: "0 0 6px", fontWeight: 700 }}>
-        Set Up Two-Factor Authentication
-      </h1>
-      <p style={{ fontSize: 13, color: T2, margin: "0 0 24px", lineHeight: 1.5 }}>
-        2FA is mandatory for all corporate accounts. Scan the QR code with Google Authenticator, Authy, or any TOTP app.
-      </p>
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-portal-gold rounded-2xl shadow-lg shadow-portal-gold/20 mb-4">
+          <Smartphone className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-portal-gold mb-2">Two-Factor Authentication</h2>
+        <p className="text-portal-text-muted">For your security, 2FA is mandatory for all accounts</p>
+      </div>
+
+      <div className="bg-portal-input rounded-2xl p-6 border border-portal-border">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 bg-portal-gold rounded-xl flex items-center justify-center flex-shrink-0 shadow-portal-gold/20 shadow-lg">
+            <Smartphone className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-bold text-portal-gold mb-1">Setup on Mobile</h3>
+            <p className="text-sm text-portal-text-muted">Open Google Authenticator, Authy, or Microsoft Authenticator and add via manual entry</p>
+          </div>
+        </div>
+
+        <div className="bg-portal-card rounded-xl p-4 mb-4 border border-portal-border">
+          <p className="text-xs font-semibold text-portal-text-muted mb-2 uppercase tracking-wide">Your Secret Code:</p>
+          <div className="flex items-center gap-2 mb-2">
+            <code className="flex-1 text-sm font-mono bg-portal-input px-4 py-3 rounded-xl text-portal-gold break-all border border-portal-border select-all">
+              {secret}
+            </code>
+            <button type="button" onClick={copySecret}
+              className="p-3 bg-portal-gold hover:bg-portal-gold/90 rounded-xl transition-all flex-shrink-0 shadow-lg shadow-portal-gold/20">
+              {copied ? <Check className="w-5 h-5 text-[#0b0b0f]" /> : <Copy className="w-5 h-5 text-[#0b0b0f]" />}
+            </button>
+          </div>
+          {copied && <p className="text-xs text-green-400 font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Copied! Paste into your authenticator app</p>}
+        </div>
+
+        <ol className="text-sm text-portal-text-muted space-y-1 pl-5 list-decimal">
+          <li>Open your authenticator app and tap "+"</li>
+          <li>Choose "Enter a setup key" or "Manual entry"</li>
+          <li>Paste the code above, then enter the 6-digit code below</li>
+        </ol>
+      </div>
 
       {qrUrl && (
-        <div style={{ background: I, borderRadius: 12, padding: 16, display: "inline-block", marginBottom: 16 }}>
-          <img src={qrUrl} alt="2FA QR Code" style={{ width: 200, height: 200, display: "block" }} />
+        <div className="hidden lg:block bg-portal-input rounded-2xl p-6 border border-portal-border text-center">
+          <p className="text-sm font-semibold text-portal-gold mb-4">Or scan this QR code:</p>
+          <img src={qrUrl} alt="2FA QR Code" className="mx-auto rounded-xl border border-portal-border shadow-lg" style={{width:200,height:200}} />
         </div>
       )}
 
-      <div style={{ textAlign: "left", marginBottom: 20 }}>
-        <label style={{ fontSize: 10, color: M, textTransform: "uppercase" as const, letterSpacing: "1px", display: "block", marginBottom: 4 }}>
-          Manual entry key
-        </label>
-        <div style={{
-          background: I, border: `1px solid ${B}`, borderRadius: 8, padding: "10px 14px",
-          fontFamily: "monospace", fontSize: 12, color: G, letterSpacing: "1px", wordBreak: "break-all" as const, userSelect: "all" as const,
-        }}>
-          {secret}
+      <div>
+        <label className="block text-sm font-semibold text-portal-gold mb-2">Enter the 6-digit code from your app</label>
+        <div className="flex gap-2 justify-center mb-4">
+          {code.map((d, i) => (
+            <input key={i} ref={el => { refs.current[i] = el; }}
+              type="text" inputMode="numeric" maxLength={1} value={d}
+              onChange={e => handleInput(i, e.target.value)}
+              onKeyDown={e => handleKeyDown(i, e)}
+              onPaste={handlePaste}
+              className="w-12 h-14 text-center text-2xl font-bold bg-portal-input border border-portal-border rounded-xl text-portal-text-primary outline-none focus:border-portal-gold-border focus:ring-2 focus:ring-portal-gold-soft font-serif"
+            />
+          ))}
         </div>
       </div>
-
-      <p style={{ fontSize: 13, color: T2, margin: "0 0 4px", textAlign: "left" }}>Enter the 6-digit code from your app:</p>
-
-      <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "16px 0 20px" }}>
-        {code.map((d, i) => (
-          <input key={i} ref={el => { refs.current[i] = el; }}
-            type="text" inputMode="numeric" maxLength={1} value={d}
-            onChange={e => handleInput(i, e.target.value)}
-            onKeyDown={e => handleKeyDown(i, e)}
-            onPaste={handlePaste}
-            onFocus={e => { e.target.style.borderColor = GB; }}
-            onBlur={e => { e.target.style.borderColor = B; }}
-            style={codeBox}
-          />
-        ))}
-      </div>
-
-      {loading && <p style={{ fontSize: 12, color: G, textAlign: "center" }}>Verifying...</p>}
 
       {error && (
-        <div style={{ background: "rgba(192,57,43,0.1)", border: "1px solid rgba(192,57,43,0.3)", borderRadius: 10, padding: "12px 16px", textAlign: "left" }}>
-          <p style={{ fontSize: 13, color: R, margin: 0 }}>{error}</p>
+        <div className="p-4 bg-red-500/10 border-l-4 border-red-500 rounded-r-xl">
+          <p className="text-sm text-red-400 font-medium">{error}</p>
         </div>
       )}
+
+      <button onClick={() => verify(code.join(""))} disabled={loading || code.join("").length !== 6}
+        className="w-full bg-portal-gold hover:bg-portal-gold/90 text-[#0b0b0f] font-semibold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 shadow-lg shadow-portal-gold/20">
+        {loading ? (
+          <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Verifying...</span></>
+        ) : (
+          <><Lock className="w-5 h-5" /><span>Verify & Sign In</span></>
+        )}
+      </button>
     </div>
   );
 }
 
 export default function Setup2FAPage() {
-  const BG = "#07070a";
-  const C = "#202028";
-  const G = "#c9a84c";
-  const B = "rgba(255,255,255,0.06)";
-  const M = "#6b6969";
-
   return (
-    <div style={{ minHeight: "100vh", background: BG, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-dm-sans, DM Sans, -apple-system, sans-serif)", padding: 16 }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <div style={{ width: "100%", maxWidth: 440, textAlign: "center" }}>
-        <a href="/" style={{ display: "inline-block", marginBottom: 8 }}>
-          <img src="https://ausclear.au/AusClear-Light-Transparent.png" alt="AusClear" style={{ height: 36 }} />
-        </a>
-        <div style={{ fontSize: 10, color: G, textTransform: "uppercase", letterSpacing: "3px", fontWeight: 700, marginBottom: 36 }}>Corporate Portal</div>
-        <div style={{ background: C, borderRadius: 16, padding: "36px 28px", border: `1px solid ${B}`, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${G}, transparent)` }} />
-          <Suspense fallback={<p style={{ color: "#9a9898" }}>Loading...</p>}>
-            <Setup2FAContent />
-          </Suspense>
+    <div className="min-h-screen bg-portal-bg relative overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-portal-gold/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="lg:hidden pt-8 pb-4 px-6 text-center">
+        <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" className="h-16 w-auto mx-auto mb-2" />
+        <p className="text-portal-gold text-sm font-semibold tracking-wide font-serif">Corporate Portal</p>
+      </div>
+      <div className="split-layout flex flex-col lg:flex-row relative z-10">
+        <div className="marketing-section hidden lg:flex flex-col justify-center px-12 py-12 bg-portal-card border-r border-portal-border relative overflow-hidden">
+          <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-gradient-to-b from-portal-gold via-portal-gold to-transparent" />
+          <div className="max-w-xl relative z-10">
+            <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" className="h-20 w-auto mb-6" />
+            <h2 className="text-3xl font-serif font-bold text-portal-text-primary mb-4">Secure Your <span className="text-portal-gold">Account</span></h2>
+            <p className="text-portal-text-muted text-lg">Two-factor authentication adds an essential layer of security to protect your sensitive clearance data.</p>
+          </div>
         </div>
-        <div style={{ marginTop: 28 }}>
-          <p style={{ fontSize: 11, color: M }}>Nephthys Pty Ltd (ACN 628 031 587) trading as AusClear</p>
-          <p style={{ fontSize: 11, color: M, marginTop: 4 }}>1300 027 423 · support@ausclear.com.au</p>
+        <div className="form-section flex items-center justify-center p-6 lg:p-8 lg:min-h-screen bg-portal-bg">
+          <div className="w-full max-w-lg">
+            <div className="form-card bg-portal-card rounded-3xl shadow-2xl shadow-black/20 p-8 border border-portal-border">
+              <Suspense fallback={<div className="text-portal-text-muted text-center py-8">Loading...</div>}>
+                <Setup2FAContent />
+              </Suspense>
+            </div>
+            <div className="mt-6 text-center">
+              <p className="text-xs text-portal-text-muted">Nephthys Pty Ltd (ACN 628 031 587) trading as AusClear</p>
+            </div>
+          </div>
         </div>
       </div>
-      <style>{`* { box-sizing: border-box; } html, body { margin: 0; padding: 0; background: ${BG}; }`}</style>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-portal-bg to-transparent pointer-events-none" />
     </div>
   );
 }
