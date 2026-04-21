@@ -14,13 +14,11 @@ export default function RegisterPage() {
   const [confirmPw, setConfirmPw] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // 2FA setup
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [twoFASecret, setTwoFASecret] = useState("");
   const [setupCode, setSetupCode] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Email OTP confirmation
   const [emailOtpCode, setEmailOtpCode] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState("");
@@ -49,7 +47,6 @@ export default function RegisterPage() {
   };
   const strength = pwStrength(password);
 
-  /* ── Step 1: Register ── */
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -65,9 +62,16 @@ export default function RegisterPage() {
         body: JSON.stringify({ email: em, password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Registration failed."); setLoading(false); return; }
+      if (!res.ok) {
+        if (data.redirect_to_login) {
+          // Account exists — redirect to login with message
+          router.push("/login?notice=" + encodeURIComponent(data.error));
+          return;
+        }
+        setError(data.error || "Registration failed."); setLoading(false); return;
+      }
 
-      // Load 2FA setup QR
+      // Load 2FA setup
       const tfaRes = await fetch("/api/auth/setup-2fa", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: em }),
@@ -81,7 +85,6 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
-  /* ── Step 2: Verify 2FA setup ── */
   const handleSetup2FA = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -97,11 +100,7 @@ export default function RegisterPage() {
         setError(data.error || "Invalid code. Please try again.");
         setSetupCode(""); setupRef.current?.focus();
       } else {
-        // 2FA confirmed — now send email confirmation OTP
-        // Sign in temporarily to trigger Supabase to send the confirmation email
-        await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password });
-        await supabase.auth.signOut();
-        // Resend signup OTP
+        // 2FA set up — now trigger email confirmation OTP
         await supabase.auth.resend({ type: "signup", email: email.toLowerCase().trim() });
         setStep("email-confirmation");
       }
@@ -109,7 +108,6 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
-  /* ── Step 3: Verify email OTP ── */
   const handleVerifyEmailOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); setResendSuccess("");
@@ -122,8 +120,6 @@ export default function RegisterPage() {
         type: "email",
       });
       if (verifyErr) { setError(verifyErr.message); setLoading(false); return; }
-
-      // Signed in — go to dashboard
       router.push("/dashboard");
       router.refresh();
     } catch { setError("Verification failed. Please try again."); }
@@ -147,7 +143,7 @@ export default function RegisterPage() {
 
   const leftPanel = {
     register: { title: <>Create Your <span className="text-portal-gold">Secure Account</span></>, sub: "Your email must be registered with AusClear before you can create a corporate account." },
-    "setup-2fa": { title: <>Secure Your <span className="text-portal-gold">Account</span></>, sub: "Two-factor authentication is mandatory for all corporate accounts. Set it up now to continue." },
+    "setup-2fa": { title: <>Secure Your <span className="text-portal-gold">Account</span></>, sub: "Two-factor authentication is mandatory for all corporate accounts." },
     "email-confirmation": { title: <>Almost <span className="text-portal-gold">There!</span></>, sub: "Check your email for a verification code to activate your account." },
   };
 
@@ -162,7 +158,6 @@ export default function RegisterPage() {
       </div>
 
       <div className="split-layout flex flex-col lg:flex-row relative z-10">
-        {/* Left */}
         <div className="marketing-section hidden lg:flex flex-col justify-center px-12 py-12 bg-portal-card border-r border-portal-border relative overflow-hidden">
           <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-gradient-to-b from-portal-gold via-portal-gold to-transparent" />
           <div className="max-w-xl relative z-10">
@@ -183,7 +178,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Right */}
         <div className="form-section flex items-center justify-center p-6 lg:p-8 min-h-[calc(100vh-120px)] lg:min-h-screen bg-portal-bg">
           <div className="w-full max-w-lg">
             <div className="form-card bg-portal-card rounded-3xl shadow-2xl shadow-black/20 p-8 border border-portal-border">
@@ -195,7 +189,7 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* ── STEP: REGISTER ── */}
+              {/* ── REGISTER ── */}
               {step === "register" && (
                 <form onSubmit={handleRegister} className="space-y-5">
                   <div className="text-center mb-6">
@@ -264,7 +258,7 @@ export default function RegisterPage() {
                 </form>
               )}
 
-              {/* ── STEP: SETUP 2FA ── */}
+              {/* ── SETUP 2FA ── */}
               {step === "setup-2fa" && (
                 <div className="space-y-6">
                   <div className="text-center">
@@ -285,21 +279,16 @@ export default function RegisterPage() {
                         <p className="text-sm text-portal-text-muted">Open Google Authenticator, Authy, or Microsoft Authenticator and add via manual entry</p>
                       </div>
                     </div>
-
                     <div className="bg-portal-card rounded-xl p-4 mb-4 border border-portal-border">
                       <p className="text-xs font-semibold text-portal-text-muted mb-2 uppercase tracking-wide">Your Secret Code:</p>
                       <div className="flex items-center gap-2 mb-2">
-                        <code className="flex-1 text-sm font-mono bg-portal-input px-3 py-2.5 rounded-xl text-portal-gold break-all border border-portal-border select-all">
-                          {twoFASecret}
-                        </code>
-                        <button type="button" onClick={copySecret}
-                          className="p-2.5 bg-portal-gold hover:bg-portal-gold/90 rounded-xl transition-all flex-shrink-0 shadow-lg shadow-portal-gold/20">
+                        <code className="flex-1 text-sm font-mono bg-portal-input px-3 py-2.5 rounded-xl text-portal-gold break-all border border-portal-border select-all">{twoFASecret}</code>
+                        <button type="button" onClick={copySecret} className="p-2.5 bg-portal-gold hover:bg-portal-gold/90 rounded-xl transition-all flex-shrink-0 shadow-lg shadow-portal-gold/20">
                           {copied ? <Check className="w-4 h-4 text-[#0b0b0f]" /> : <Copy className="w-4 h-4 text-[#0b0b0f]" />}
                         </button>
                       </div>
                       {copied && <p className="text-xs text-green-400 font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Copied!</p>}
                     </div>
-
                     <ol className="text-sm text-portal-text-muted space-y-1 pl-5 list-decimal">
                       <li>Open your authenticator app and tap "+"</li>
                       <li>Choose "Enter a setup key" or "Manual entry"</li>
@@ -322,23 +311,19 @@ export default function RegisterPage() {
                         className="w-full px-4 py-4 bg-portal-input border border-portal-border rounded-xl focus:ring-2 focus:ring-portal-gold-soft focus:border-portal-gold-border outline-none transition-all text-center text-3xl font-mono tracking-[0.5em] text-portal-text-primary"
                         placeholder="000000" maxLength={6} autoComplete="one-time-code" required />
                     </div>
-
                     <button type="submit" disabled={loading}
                       className="w-full bg-portal-gold hover:bg-portal-gold/90 text-[#0b0b0f] font-semibold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2.5 shadow-lg shadow-portal-gold/20">
                       {loading ? (
                         <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Verifying...</span></>
                       ) : <><Lock className="w-5 h-5" /><span>Verify & Continue</span></>}
                     </button>
-
                     <button type="button" onClick={() => router.push("/login")}
-                      className="w-full bg-portal-input text-portal-gold font-semibold py-3 rounded-xl transition-all">
-                      Cancel Registration
-                    </button>
+                      className="w-full bg-portal-input text-portal-gold font-semibold py-3 rounded-xl transition-all">Cancel Registration</button>
                   </form>
                 </div>
               )}
 
-              {/* ── STEP: EMAIL OTP CONFIRMATION ── */}
+              {/* ── EMAIL OTP ── */}
               {step === "email-confirmation" && (
                 <div className="space-y-6 text-center">
                   <div>
@@ -369,7 +354,6 @@ export default function RegisterPage() {
                         className="w-full px-4 py-4 bg-portal-input border border-portal-border rounded-xl focus:ring-2 focus:ring-portal-gold-soft focus:border-portal-gold-border outline-none transition-all text-center text-3xl font-mono tracking-[0.4em] text-portal-text-primary"
                         placeholder="00000000" maxLength={8} autoComplete="one-time-code" required />
                     </div>
-
                     <button type="submit" disabled={loading || emailOtpCode.length < 6}
                       className="w-full bg-portal-gold hover:bg-portal-gold/90 text-[#0b0b0f] font-semibold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 shadow-lg shadow-portal-gold/20">
                       {loading ? (
