@@ -13,14 +13,10 @@ export const metadata: Metadata = {
   description: "AusClear Corporate Client Dashboard",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} antialiased`} style={{ fontFamily: "var(--font-dm-sans), -apple-system, sans-serif" }}>
+      <body className={`${dmSans.variable} antialiased`} style={{ fontFamily: "var(--font-dm-sans), DM Sans, -apple-system, sans-serif" }}>
         {children}
       </body>
     </html>
