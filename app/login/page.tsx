@@ -162,10 +162,10 @@ export default function LoginPage() {
   };
 
   const features = [
-    { icon: CheckCircle, title: "Track Clearance Status", desc: "Real-time updates on application progress" },
-    { icon: FileText, title: "Manage Documents", desc: "Upload and access documents securely" },
-    { icon: MessageSquare, title: "Secure Messaging", desc: "Communicate with your AusClear consultant" },
-    { icon: Shield, title: "Securely Encrypted", desc: "End-to-end encryption on Australian servers" },
+    { icon: CheckCircle, title: "Manage Your Workforce", desc: "View and track all sponsored personnel in one place" },
+    { icon: FileText, title: "Clearance Oversight", desc: "Monitor clearance levels, stages, and revalidation dates" },
+    { icon: MessageSquare, title: "Nominate Employees", desc: "Submit new clearance nominations directly to AusClear" },
+    { icon: Shield, title: "Secure & Accredited", desc: "DISP-accredited platform built for Australian defence industry" },
   ];
 
   return (
@@ -487,3 +487,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
