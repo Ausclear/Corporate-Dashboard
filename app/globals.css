@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #07070a;
+  color: #e8e6e1;
+}
+
+::-webkit-scrollbar { width: 4px; height: 0; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+
+input::placeholder { color: #6b6969; }
+
+.filter-scroll::-webkit-scrollbar { display: none; }
+.filter-scroll { -ms-overflow-style: none; scrollbar-width: none; }
