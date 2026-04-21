@@ -117,7 +117,7 @@ export default function RegisterPage() {
       const { error: verifyErr } = await supabase.auth.verifyOtp({
         email: email.toLowerCase().trim(),
         token: emailOtpCode,
-        type: "email",
+        type: "signup",
       });
       if (verifyErr) { setError(verifyErr.message); setLoading(false); return; }
       router.push("/dashboard");
