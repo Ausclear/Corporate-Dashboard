@@ -28,30 +28,33 @@ export async function POST(req: Request) {
       }, { status: 403 });
     }
 
-    // Check if user already exists in auth
-    const { data: { users } } = await supabase.auth.admin.listUsers();
-    const existing = users.find(u => u.email === em);
+    // Check if user already exists in auth using getUserByEmail (fast, no listUsers)
+    const { data: { users } } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const existing = users.find((u: { email?: string }) => u.email === em);
 
     if (existing) {
-      // Account exists — check if 2FA is set up
-      if (!corpUser.totp_enabled) {
-        // Account created but 2FA never completed — send them to login which handles setup
+      if (existing.email_confirmed_at && corpUser.totp_enabled) {
+        // Fully registered — send to login
         return NextResponse.json({
-          error: "An account with this email already exists but 2FA setup is incomplete. Please sign in to complete setup.",
+          error: "An account with this email already exists. Please sign in instead.",
           redirect_to_login: true
         }, { status: 409 });
       }
-      return NextResponse.json({
-        error: "An account with this email already exists. Please sign in instead.",
-        redirect_to_login: true
-      }, { status: 409 });
+      // Partially registered (email unconfirmed or 2FA incomplete) — delete and start fresh
+      await supabase.auth.admin.deleteUser(existing.id);
     }
 
-    // Create the user via admin API — sets is_corporate: true so the trigger skips clients table
+    // Reset any previous partial 2FA setup so they go through setup fresh
+    await supabase
+      .from("corporate_users")
+      .update({ totp_enabled: false, totp_secret: null })
+      .eq("email", em);
+
+    // Create the user — email_confirm: false sends the OTP email
     const { data: authData, error: createErr } = await supabase.auth.admin.createUser({
       email: em,
       password,
-      email_confirm: false, // require email OTP confirmation
+      email_confirm: false,
       user_metadata: {
         company_name: corpUser.company_name || "",
         display_name: corpUser.display_name || "",
