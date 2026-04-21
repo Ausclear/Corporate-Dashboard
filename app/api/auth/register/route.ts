@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { email, password, company_name } = await req.json();
+    const { email, password } = await req.json();
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     // Check email is on the approved corporate list
     const { data: corpUser } = await supabase
       .from("corporate_users")
-      .select("id, company_name, display_name")
+      .select("id, company_name, display_name, totp_enabled")
       .eq("email", em)
       .single();
 
@@ -28,29 +28,40 @@ export async function POST(req: Request) {
       }, { status: 403 });
     }
 
-    // Create the user via admin API
-    // This fires the on_auth_user_created trigger which tries to insert into public.clients.
-    // We handle the conflict by making customer_reference NULL (not empty string)
-    // so it doesn't hit the unique constraint.
+    // Check if user already exists in auth
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existing = users.find(u => u.email === em);
+
+    if (existing) {
+      // Account exists — check if 2FA is set up
+      if (!corpUser.totp_enabled) {
+        // Account created but 2FA never completed — send them to login which handles setup
+        return NextResponse.json({
+          error: "An account with this email already exists but 2FA setup is incomplete. Please sign in to complete setup.",
+          redirect_to_login: true
+        }, { status: 409 });
+      }
+      return NextResponse.json({
+        error: "An account with this email already exists. Please sign in instead.",
+        redirect_to_login: true
+      }, { status: 409 });
+    }
+
+    // Create the user via admin API — sets is_corporate: true so the trigger skips clients table
     const { data: authData, error: createErr } = await supabase.auth.admin.createUser({
       email: em,
       password,
-      email_confirm: true, // skip email confirmation for corporate accounts
+      email_confirm: false, // require email OTP confirmation
       user_metadata: {
-        company_name: corpUser.company_name || company_name || "",
+        company_name: corpUser.company_name || "",
         display_name: corpUser.display_name || "",
-        customer_reference: null, // NULL avoids unique constraint on clients table
+        customer_reference: null,
         full_name: corpUser.display_name || "",
         is_corporate: true,
       },
     });
 
     if (createErr) {
-      if (createErr.message.toLowerCase().includes("already registered") ||
-          createErr.message.toLowerCase().includes("already been registered") ||
-          createErr.message.includes("already exists")) {
-        return NextResponse.json({ error: "An account with this email already exists. Please sign in instead." }, { status: 409 });
-      }
       return NextResponse.json({ error: createErr.message }, { status: 400 });
     }
 
