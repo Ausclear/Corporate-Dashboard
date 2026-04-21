@@ -47,14 +47,11 @@ export default function Dashboard() {
   const [personnelFilter, setPersonnelFilter] = useState("All");
   const [showLogout, setShowLogout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [userInitials, setUserInitials] = useState("··");
+  const [displayName, setDisplayName] = useState("");
   const router = useRouter();
   const supabase = createClient();
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  };
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700);
@@ -62,6 +59,38 @@ export default function Dashboard() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Load user session
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push("/login"); return; }
+      const em = user.email || "";
+      setUserEmail(em);
+      // Derive initials from email prefix
+      const prefix = em.split("@")[0];
+      const parts = prefix.split(/[._-]/);
+      if (parts.length >= 2) {
+        setUserInitials((parts[0][0] + parts[1][0]).toUpperCase());
+      } else {
+        setUserInitials(prefix.slice(0, 2).toUpperCase());
+      }
+      // Try to get display name from corporate_users
+      fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: em }),
+      }).then(r => r.json()).then(d => {
+        if (d.display_name) setDisplayName(d.display_name);
+        else if (d.company_name) setDisplayName(d.company_name);
+      }).catch(() => {});
+    });
+  }, [router, supabase.auth]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   const filteredPersonnel = PERSONNEL.filter(p => {
     const q = searchQuery.toLowerCase();
@@ -186,7 +215,7 @@ export default function Dashboard() {
           onFocus={e => e.target.style.borderColor = GOLD_BORDER} onBlur={e => e.target.style.borderColor = BORDER} />
       </div>
 
-      <div className="filter-scroll" style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 4 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 4 }}>
         {["All", "Baseline", "NV1", "NV2", "Active", "Pending", "Renewal"].map(f => (
           <button key={f} onClick={() => setPersonnelFilter(f)} style={{
             background: personnelFilter === f ? GOLD_DIM : INPUT, border: `1px solid ${personnelFilter === f ? GOLD_BORDER : BORDER}`,
@@ -320,12 +349,29 @@ export default function Dashboard() {
           <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: "0 0 20px" }}>
             Browse our library of 120+ articles covering security clearances, AGSVA processes, DISP requirements, and more.
           </p>
-          <button style={{
-            background: `linear-gradient(135deg, ${GOLD}, #b8942e)`, border: "none", borderRadius: 8, padding: "12px 22px",
-            color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
-          }}>Visit Knowledge Base</button>
+          <a href="https://support.cfirst.com.au" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+            <button style={{
+              background: `linear-gradient(135deg, ${GOLD}, #b8942e)`, border: "none", borderRadius: 8, padding: "12px 22px",
+              color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+            }}>Visit Knowledge Base</button>
+          </a>
         </div>
       </div>
+
+      {/* Signed in as */}
+      {userEmail && (
+        <div style={{ marginTop: 14, background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 700, marginBottom: 3 }}>Signed In As</div>
+            <div style={{ fontSize: 13, color: TEXT }}>{userEmail}</div>
+            {displayName && <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{displayName}</div>}
+          </div>
+          <button onClick={() => setShowLogout(true)} style={{
+            background: "rgba(192,57,43,0.08)", border: "1px solid rgba(192,57,43,0.25)", borderRadius: 8,
+            padding: "9px 16px", color: "#c0392b", fontWeight: 600, fontSize: 12, cursor: "pointer", fontFamily: "inherit",
+          }}>Sign Out</button>
+        </div>
+      )}
     </div>
   );
 
@@ -339,6 +385,8 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", background: BG, color: TEXT, fontSize: 14, overflowX: "hidden" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
       {/* Sidebar overlay */}
       {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 99 }} />}
 
@@ -353,6 +401,25 @@ export default function Dashboard() {
           <img src="https://ausclear.au/AusClear-Light-Transparent.png" alt="AusClear" style={{ height: 28 }} />
           <div style={{ fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "2px", fontWeight: 700, marginTop: 6 }}>Corporate Portal</div>
         </div>
+
+        {/* User info in sidebar */}
+        {userEmail && (
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${BORDER}`, background: "rgba(201,168,76,0.04)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%",
+                background: GOLD_DIM, border: `1px solid ${GOLD_BORDER}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 700, color: GOLD, flexShrink: 0,
+              }}>{userInitials}</div>
+              <div style={{ minWidth: 0 }}>
+                {displayName && <div style={{ fontSize: 12, color: TEXT, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>}
+                <div style={{ fontSize: 11, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <nav style={{ flex: 1, padding: "12px 10px" }}>
           {NAV_ITEMS.map(item => {
             const active = page === item.key;
@@ -399,12 +466,13 @@ export default function Dashboard() {
             {NAV_ITEMS.find(n => n.key === page)?.label || "Dashboard"}
           </span>
         </div>
-        <div style={{
-          width: 32, height: 32, borderRadius: "50%",
+        <button onClick={() => setShowLogout(true)} style={{
+          width: 34, height: 34, borderRadius: "50%",
           background: GOLD_DIM, border: `1px solid ${GOLD_BORDER}`,
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: "Georgia, serif",
-        }}>SD</div>
+          cursor: "pointer",
+        }}>{userInitials}</button>
       </div>
 
       {/* Main content */}
@@ -412,16 +480,17 @@ export default function Dashboard() {
         {content[page]?.()}
       </main>
 
-      {/* Logout modal */}
+      {/* Sign out modal */}
       {showLogout && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16,
         }} onClick={e => e.target === e.currentTarget && setShowLogout(false)}>
           <div style={{ background: CARD, borderRadius: 16, width: "100%", maxWidth: 340, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-            <div style={{ padding: "24px 24px 16px" }}>
+            <div style={{ padding: "24px 24px 0" }}>
               <h3 style={{ fontFamily: "Georgia, serif", fontSize: 17, color: TEXT, margin: "0 0 8px" }}>Sign Out</h3>
-              <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: 0 }}>This will end your current session.</p>
+              {userEmail && <p style={{ fontSize: 12, color: MUTED, margin: "0 0 6px", fontFamily: "monospace" }}>{userEmail}</p>}
+              <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: "0 0 20px" }}>This will end your current session.</p>
             </div>
             <div style={{ display: "flex", gap: 10, padding: "0 24px 24px" }}>
               <button onClick={() => setShowLogout(false)} style={{
@@ -436,6 +505,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <style>{`.filter-scroll { scrollbar-width: none; } .filter-scroll::-webkit-scrollbar { display: none; }`}</style>
     </div>
   );
 }
