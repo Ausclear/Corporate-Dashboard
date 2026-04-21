@@ -6,8 +6,6 @@ const PUBLIC_PATHS = [
   "/register",
   "/forgot-password",
   "/update-password",
-  "/setup-2fa",
-  "/verify-2fa",
   "/api/auth/",
   "/_next/",
   "/favicon",
@@ -16,10 +14,7 @@ const PUBLIC_PATHS = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Landing page always public
-  if (pathname === "/") return NextResponse.next();
-
-  // Skip auth check for all public paths
+  // Skip auth check for public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
