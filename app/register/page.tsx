@@ -36,28 +36,25 @@ export default function RegisterPage() {
     if (strength.score < 2) { setError("Please choose a stronger password."); return; }
     setLoading(true);
     try {
-      const checkRes = await fetch("/api/auth/check-email", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: em }),
+      // Use server-side route to avoid the clients table trigger issue
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: em, password }),
       });
-      const checkData = await checkRes.json();
-      if (!checkData.authorised) {
-        setError("This email is not associated with a corporate AusClear account. Please contact us on 1300 027 423.");
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Registration failed. Please try again.");
         setLoading(false); return;
       }
-      const { error: authErr } = await supabase.auth.signUp({ email: em, password,
-        options: { data: { company_name: checkData.company_name } } });
-      if (authErr) {
-        if (authErr.message.includes("already registered")) {
-          setError("An account with this email already exists. Please sign in instead.");
-        } else { setError(authErr.message); }
-        setLoading(false); return;
-      }
+
+      // Account created — now sign in and proceed to 2FA setup
       const { error: loginErr } = await supabase.auth.signInWithPassword({ email: em, password });
       if (loginErr) {
-        setError("Account created. Please check your email to confirm, then sign in.");
+        setError("Account created but sign-in failed. Please try signing in manually.");
         setLoading(false); return;
       }
+
       router.push("/setup-2fa?email=" + encodeURIComponent(em));
     } catch { setError("An error occurred. Please try again."); }
     setLoading(false);
@@ -74,7 +71,6 @@ export default function RegisterPage() {
       </div>
 
       <div className="split-layout flex flex-col lg:flex-row relative z-10">
-        {/* Left — marketing */}
         <div className="marketing-section hidden lg:flex flex-col justify-center px-12 py-12 bg-portal-card border-r border-portal-border relative overflow-hidden">
           <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-gradient-to-b from-portal-gold via-portal-gold to-transparent" />
           <div className="max-w-xl relative z-10">
@@ -95,7 +91,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Right — form */}
         <div className="form-section flex items-center justify-center p-6 lg:p-8 min-h-[calc(100vh-120px)] lg:min-h-screen bg-portal-bg">
           <div className="w-full max-w-md">
             <div className="form-card bg-portal-card rounded-3xl shadow-2xl shadow-black/20 p-8 border border-portal-border">
