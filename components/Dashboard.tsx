@@ -74,7 +74,6 @@ const NAV_ITEMS = [
 export default function Dashboard() {
   const [page, setPage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showLogout, setShowLogout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [personnelFilter, setPersonnelFilter] = useState("All");
@@ -99,10 +98,7 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login"); router.refresh();
-  };
+  const handleSignOut = () => { router.push("/logout"); };
 
   const userInitials = (() => {
     if (data?.user?.display_name) {
@@ -465,7 +461,7 @@ export default function Dashboard() {
           })}
         </nav>
         <div style={{ padding: "12px 10px 20px", borderTop: `1px solid ${BORDER}` }}>
-          <button onClick={() => { setShowLogout(true); setSidebarOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", borderRadius: 10, border: "none", background: "transparent", color: TEXT2, fontSize: 13, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+          <button onClick={() => { handleSignOut(); setSidebarOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", borderRadius: 10, border: "none", background: "transparent", color: TEXT2, fontSize: 13, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
             {Icons.logout(MUTED)} Sign Out
           </button>
         </div>
@@ -479,30 +475,13 @@ export default function Dashboard() {
           </button>
           <span style={{ fontFamily: "Georgia, serif", fontSize: 15, color: TEXT, fontWeight: 700 }}>{NAV_ITEMS.find(n => n.key === page)?.label || "Dashboard"}</span>
         </div>
-        <button onClick={() => setShowLogout(true)} style={{ width: 34, height: 34, borderRadius: "50%", background: GOLD_DIM, border: `1px solid ${GOLD_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: "Georgia, serif", cursor: "pointer" }}>{userInitials}</button>
+        <button onClick={handleSignOut} style={{ width: 34, height: 34, borderRadius: "50%", background: GOLD_DIM, border: `1px solid ${GOLD_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: "Georgia, serif", cursor: "pointer" }}>{userInitials}</button>
       </div>
 
       <main style={{ padding: isMobile ? "16px 12px 80px" : "24px 24px 60px", maxWidth: 1100, margin: "0 auto" }}>
         {content[page]?.()}
       </main>
 
-      {/* Sign out modal */}
-      {showLogout && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }} onClick={e => e.target === e.currentTarget && setShowLogout(false)}>
-          <div style={{ background: CARD, borderRadius: 16, width: "100%", maxWidth: 340, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-            <div style={{ padding: "24px 24px 0" }}>
-              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 17, color: TEXT, margin: "0 0 8px" }}>Sign Out</h3>
-              {co?.company_name && <p style={{ fontSize: 12, color: GOLD, margin: "0 0 4px", fontWeight: 700 }}>{co.company_name}</p>}
-              {data?.user?.email && <p style={{ fontSize: 12, color: MUTED, margin: "0 0 12px", fontFamily: "monospace" }}>{data.user.email}</p>}
-              <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: "0 0 20px" }}>This will end your current session.</p>
-            </div>
-            <div style={{ display: "flex", gap: 10, padding: "0 24px 24px" }}>
-              <button onClick={() => setShowLogout(false)} style={{ flex: 1, padding: "12px", background: INPUT, border: `1px solid ${BORDER}`, borderRadius: 10, color: TEXT2, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={handleSignOut} style={{ flex: 1, padding: "12px", background: `linear-gradient(135deg, ${GOLD}, #b8942e)`, border: "none", borderRadius: 10, color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Sign Out</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
