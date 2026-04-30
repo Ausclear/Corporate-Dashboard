@@ -22,19 +22,29 @@ type Data = { company: Co; personnel: P[]; activity: A[]; user: { email: string 
 
 // ── Corporate pipeline stages ─────────────────────────────────────────────────
 const CORP_STAGES = [
-  "Onboarding",
+  "Onboard Corporate Account",
   "Prepare Contract",
   "Contract Sent",
+  "Awaiting Signature",
   "Contracts Signed",
-  "Active",
+  "Create Invoice",
+  "Invoice Sent",
+  "Invoice Outstanding",
+  "Invoice Paid",
+  "Corporate Approved",
 ];
-// Map Zoho stage names to short labels
+// Map Zoho stage names (identity mapping - use exact Zoho values)
 const STAGE_MAP: Record<string, string> = {
-  "Onboard Corporate Account": "Onboarding",
+  "Onboard Corporate Account": "Onboard Corporate Account",
   "Prepare Contract": "Prepare Contract",
   "Contract Sent": "Contract Sent",
+  "Awaiting Signature": "Awaiting Signature",
   "Contracts Signed": "Contracts Signed",
-  "Active": "Active",
+  "Create Invoice": "Create Invoice",
+  "Invoice Sent": "Invoice Sent",
+  "Invoice Outstanding": "Invoice Outstanding",
+  "Invoice Paid": "Invoice Paid",
+  "Corporate Approved": "Corporate Approved",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
