@@ -8,7 +8,6 @@ const admin = createClient(
 
 export async function GET() {
   try {
-    // TEST MODE: return NETFLIX account directly without auth
     const TEST_ACCOUNT_ID = "80905000030762144";
 
     const [companyRes, personnelRes, activityRes] = await Promise.all([
