@@ -2,34 +2,75 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const G = "#c9a84c", GD = "rgba(201,168,76,0.12)", GB = "rgba(201,168,76,0.3)";
-const BG = "#07070a", CARD = "#202028", INPUT = "#16161c";
-const TEXT = "rgba(255,255,255,0.95)", TEXT2 = "#9a9898", MUTED = "#6b6969";
-const BORDER = "rgba(255,255,255,0.06)";
-const GREEN = "#34d399", GNB = "rgba(5,150,105,0.3)", GND = "rgba(5,150,105,0.15)";
-const AMBER = "#fbbf24", AMD = "rgba(245,158,11,0.15)", AMB = "rgba(245,158,11,0.3)";
-const RED = "#f87171", RDD = "rgba(220,38,38,0.15)", RDB = "rgba(220,38,38,0.3)";
-const BLUE = "#93c5fd", BLD = "rgba(147,197,253,0.12)";
+// ── Exact colours from the HTML report ──────────────────────────────────────
+const BG     = "#07070a";
+const PANEL  = "#0f1117";
+const PANEL2 = "#161922";
+const LINE   = "#1f2330";
+const GOLD   = "#c9a84c";
+const GOLD_S = "rgba(201,168,76,0.12)";
+const INK    = "#e9e6df";
+const MUTE   = "#8a8a8f";
+const DIM    = "#5a5a60";
+const GREEN  = "#7fb98b";
+const RED    = "#c97a7a";
+const BLUE   = "#7a9bc9";
 
-const fmtMoney = (n: number | null | undefined) =>
-  n != null ? `$${Number(n).toLocaleString("en-AU", { minimumFractionDigits: 2 })}` : "—";
+// Stage colour — red if denied, green if contract signed / esc approved / clearance granted, gold otherwise
+function stageColour(stage: string): string {
+  const s = (stage||"").toLowerCase();
+  if (s.includes("denied") || s.includes("closed lost")) return RED;
+  if (s.includes("signed") || s.includes("approved") || s.includes("granted") || s.includes("complete") || s.includes("won")) return GREEN;
+  return GOLD;
+}
 
-const fmtDate = (d: string | null) => {
+// Clearance colour
+function clrColour(c: string): string {
+  if (c?.includes("NV2")) return GOLD;
+  if (c?.includes("NV1")) return BLUE;
+  return BLUE; // Baseline also blue (as in HTML report tag.bsl = blue)
+}
+function clrLabel(c: string): string {
+  if (c?.includes("NV2")) return "NV2";
+  if (c?.includes("NV1")) return "NV1";
+  return "BSL";
+}
+
+const fmtMoney = (n: number|null|undefined) =>
+  n != null ? `$${Number(n).toLocaleString("en-AU", {minimumFractionDigits:0})}` : "—";
+
+const fmtDate = (d: string|null) => {
   if (!d) return "—";
-  try { return new Date(d).toLocaleDateString("en-AU", { day:"2-digit", month:"short", year:"numeric" }); }
-  catch { return d; }
+  try {
+    const dt = new Date(d);
+    const day = String(dt.getDate()).padStart(2,"0");
+    const mon = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][dt.getMonth()];
+    return `${day} ${mon} ${dt.getFullYear()}`;
+  } catch { return d; }
 };
 
-const clrLabel = (c: string) => c?.includes("NV2") ? "NV2" : c?.includes("NV1") ? "NV1" : "BL";
-const clrColour = (c: string) => c?.includes("NV2") ? G : c?.includes("NV1") ? BLUE : TEXT2;
-const clrBg = (c: string) => c?.includes("NV2") ? GD : c?.includes("NV1") ? BLD : "rgba(255,255,255,0.06)";
-const clrBorder = (c: string) => c?.includes("NV2") ? GB : c?.includes("NV1") ? "rgba(147,197,253,0.3)" : "rgba(255,255,255,0.12)";
+// ── Tag component — exact style from the HTML report ───────────────────────
+function Tag({ text, col }: { text: string; col: string }) {
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "2px 8px",
+      border: `1px solid ${col}`,
+      color: col,
+      textTransform: "uppercase" as const,
+      letterSpacing: "0.1em",
+      fontSize: 9,
+      fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+      fontWeight: 400,
+      whiteSpace: "nowrap" as const,
+    }}>{text}</span>
+  );
+}
 
 const NAV = ["Dashboard","Personnel","Financials","Activity","Support"];
 
 type Co = {
-  company_name:string; abn:string; client_ref:string; status:string; tier:string|null;
-  contract_start:string|null; contract_expiry:string|null; monthly_spend:string;
+  company_name:string; abn:string; client_ref:string; status:string;
   email:string; phone:string; books_customer_number:string;
   total_nominees:number; new_total:number; upgrade_total:number; transfer_total:number;
   baseline_total:number; nv1_total:number; nv2_total:number;
@@ -43,22 +84,102 @@ type P = {
   employee_number:number|null; linked_deal_name:string|null; revalidation_date:string|null;
 };
 type A = { id:string; employee_name:string; event:string; event_type:string; event_date:string; };
-type Data = { company:Co; personnel:P[]; activity:A[]; user:{ email:string; display_name:string; role:string } };
+type Data = { company:Co; personnel:P[]; activity:A[]; user:{email:string; display_name:string; role:string} };
 
-function Badge({ text, colour, bg, border }: { text:string; colour:string; bg:string; border:string }) {
-  return <span style={{ display:"inline-block", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:colour, background:bg, border:`1px solid ${border}`, padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" }}>{text}</span>;
+// ── Drawer ──────────────────────────────────────────────────────────────────
+function Drawer({ p, onClose }: { p: P; onClose: () => void }) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:200 }} />
+      <div style={{ position:"fixed", top:0, right:0, bottom:0, width:360, background:PANEL, zIndex:201, borderLeft:`1px solid ${LINE}`, overflowY:"auto", display:"flex", flexDirection:"column" }}>
+        <div style={{ height:2, background:`linear-gradient(90deg,${GOLD},transparent)` }} />
+        <div style={{ padding:"20px 24px 16px", borderBottom:`1px solid ${LINE}`, display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:18, color:INK, fontWeight:500 }}>{p.employee_name}</div>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:8 }}>
+              <Tag text={p.clearance_request_type==="Upgrade"?"UPGRADE":"EMPLOYEE"} col={GOLD} />
+              <Tag text={clrLabel(p.clearance_type)} col={clrColour(p.clearance_type)} />
+              <Tag text={(p.stage||"—").toUpperCase()} col={stageColour(p.stage)} />
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:`1px solid ${LINE}`, cursor:"pointer", color:MUTE, fontSize:14, padding:"4px 10px", fontFamily:"inherit" }}>✕</button>
+        </div>
+        <div style={{ padding:24, flex:1 }}>
+          {[
+            { label:"Email",           value:p.email||"—" },
+            { label:"Mobile",          value:p.mobile||"—" },
+            { label:"Clearance Level", value:p.clearance_type||"—" },
+            { label:"Request Type",    value:p.clearance_request_type||"New" },
+            { label:"Stage",           value:p.stage||"—" },
+            { label:"Onboarding",      value:p.onboarding_status||"—" },
+            { label:"Batch Date",      value:fmtDate(p.batch_date) },
+            { label:"Revalidation",    value:fmtDate(p.revalidation_date) },
+            { label:"Linked Deal",     value:p.linked_deal_name||"—" },
+          ].map((item,i) => (
+            <div key={i} style={{ marginBottom:16, paddingBottom:16, borderBottom:i<8?`1px solid ${LINE}`:"none" }}>
+              <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:GOLD, textTransform:"uppercase", letterSpacing:"0.2em", marginBottom:4 }}>{item.label}</div>
+              <div style={{ fontSize:13, color:item.value==="—"?DIM:INK }}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding:"14px 24px 22px", borderTop:`1px solid ${LINE}` }}>
+          <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:DIM, letterSpacing:"0.1em" }}>SUPPORT · 1300 027 423 · support@ausclear.com.au</div>
+        </div>
+      </div>
+    </>
+  );
 }
 
-function GoldCheck() {
+// ── Deal card — exact layout from the HTML report ───────────────────────────
+function DealCard({ p, co, onClick }: { p:P; co:Co|undefined; onClick:()=>void }) {
+  const typTag = p.clearance_request_type === "Upgrade" ? "UPGRADE" :
+                 p.clearance_request_type === "Transfer" ? "TRANSFER" : "EMPLOYEE";
+  const fee = p.clearance_request_type === "Upgrade" ? 350 :
+              p.clearance_request_type === "Transfer" ? 250 : 1860;
+  const stageText = (p.stage||"Pending").toUpperCase();
+  const sc = stageColour(p.stage);
+
   return (
-    <div style={{ width:18, height:18, borderRadius:4, background:GD, border:`1px solid ${GB}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <div
+      onClick={onClick}
+      style={{
+        background: PANEL, padding:"14px 16px", display:"grid", gap:6, cursor:"pointer",
+        borderBottom: `1px solid ${LINE}`,
+        transition: "background 0.15s",
+      }}
+      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = PANEL2}
+      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = PANEL}
+    >
+      {/* Row 1: Name · Company  |  Amount */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, flexWrap:"wrap" }}>
+        <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:16, color:INK, fontWeight:400, lineHeight:1.3 }}>
+          {p.employee_name}
+          {co?.company_name && <span style={{ color:MUTE }}> · {co.company_name}</span>}
+        </div>
+        <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:13, color:GOLD, fontWeight:500, whiteSpace:"nowrap" }}>
+          {fmtMoney(fee)}
+        </div>
+      </div>
+
+      {/* Row 2: tags */}
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+        <Tag text={typTag} col={GOLD} />
+        <Tag text={clrLabel(p.clearance_type)} col={clrColour(p.clearance_type)} />
+        <Tag text={stageText} col={sc} />
+      </div>
+
+      {/* Row 3: meta */}
+      <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:DIM, letterSpacing:"0.05em" }}>
+        {p.batch_date ? fmtDate(p.batch_date) : "—"}
+        {p.email && <span> · {p.email.split("@")[0].toUpperCase()}</span>}
+      </div>
     </div>
   );
 }
 
+// ── Main ────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [page, setPage] = useState("Dashboard");
+  const [page, setPage] = useState("Personnel");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedP, setSelectedP] = useState<P|null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -85,316 +206,186 @@ export default function Dashboard() {
   const activity = data?.activity || [];
   const totalFees = co ? (co.total_agsva_fees + co.total_application_fees + co.total_sponsorship_fees) : 0;
 
-  // ── PERSONNEL DRAWER ──────────────────────────────────────────────────────
-  const Drawer = () => {
-    if (!selectedP) return null;
-    const p = selectedP;
-    return (
-      <>
-        <div onClick={() => setSelectedP(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:200, backdropFilter:"blur(6px)" }} />
-        <div style={{ position:"fixed", top:0, right:0, bottom:0, width:isMobile?"100%":400, background:CARD, zIndex:201, borderLeft:`1px solid ${BORDER}`, overflowY:"auto", display:"flex", flexDirection:"column" }}>
-          <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-          <div style={{ padding:"20px 24px 16px", borderBottom:`1px solid ${BORDER}`, display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-            <div>
-              <div style={{ fontSize:17, fontFamily:"Georgia,serif", color:TEXT, fontWeight:700, marginBottom:8 }}>{p.employee_name}</div>
-              <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                <Badge text={clrLabel(p.clearance_type)} colour={clrColour(p.clearance_type)} bg={clrBg(p.clearance_type)} border={clrBorder(p.clearance_type)} />
-                <Badge text={p.clearance_request_type||"New"} colour={G} bg={GD} border={GB} />
-              </div>
-            </div>
-            <button onClick={() => setSelectedP(null)} style={{ background:"none", border:"none", cursor:"pointer", color:TEXT2, fontSize:20, padding:4 }}>✕</button>
-          </div>
-          <div style={{ padding:24, flex:1 }}>
-            {[
-              { label:"Email", value:p.email||"—" },
-              { label:"Mobile", value:p.mobile||"—" },
-              { label:"Clearance Level", value:p.clearance_type||"—" },
-              { label:"Request Type", value:p.clearance_request_type||"New" },
-              { label:"Current Stage", value:p.stage||"—" },
-              { label:"Onboarding Status", value:p.onboarding_status||"—" },
-              { label:"Batch Date", value:fmtDate(p.batch_date) },
-              { label:"Revalidation Due", value:fmtDate(p.revalidation_date) },
-              { label:"Linked Deal", value:p.linked_deal_name||"—" },
-            ].map((item, i) => (
-              <div key={i} style={{ marginBottom:18, paddingBottom:18, borderBottom:i<8?`1px solid ${BORDER}`:"none" }}>
-                <div style={{ fontSize:10, color:G, textTransform:"uppercase", letterSpacing:"1.5px", fontWeight:700, marginBottom:4 }}>{item.label}</div>
-                <div style={{ fontSize:13, color:item.value==="—"?MUTED:TEXT }}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ padding:"16px 24px 24px", borderTop:`1px solid ${BORDER}` }}>
-            <p style={{ fontSize:11, color:MUTED, margin:"0 0 4px" }}>Questions about this employee?</p>
-            <p style={{ fontSize:12, color:TEXT2, margin:0 }}>
-              <span style={{ color:G }}>1300 027 423</span> · support@ausclear.com.au
-            </p>
-          </div>
+  // ── PERSONNEL PAGE — exact deal register style ───────────────────────────
+  const renderPersonnel = () => (
+    <div>
+      {/* Section header */}
+      <div style={{ marginBottom:16, paddingBottom:10, borderBottom:`1px solid ${LINE}` }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:isMobile?22:28, fontWeight:400, color:INK, margin:0 }}>
+            <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, color:GOLD, letterSpacing:"0.2em", marginRight:10 }}>V</span>
+            Active Personnel Register
+          </h2>
+          <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:MUTE, letterSpacing:"0.1em", textTransform:"uppercase" as const }}>
+            {personnel.length} Personnel
+          </span>
         </div>
-        <style>{`@keyframes slideIn { from { transform:translateX(100%); } to { transform:translateX(0); } }`}</style>
-      </>
-    );
-  };
+      </div>
 
-  // ── DASHBOARD ─────────────────────────────────────────────────────────────
+      {/* Deal stack */}
+      <div style={{ border:`1px solid ${LINE}`, background:LINE }}>
+        {personnel.length === 0 && (
+          <div style={{ background:PANEL, padding:"40px 20px", textAlign:"center", color:MUTE, fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:11 }}>
+            NO PERSONNEL NOMINATED
+          </div>
+        )}
+        {personnel.map((p) => (
+          <DealCard key={p.id} p={p} co={co} onClick={() => setSelectedP(p)} />
+        ))}
+      </div>
+
+      {/* Nominate button */}
+      <div style={{ marginTop:16, textAlign:"right" }}>
+        <button style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, letterSpacing:"0.15em", textTransform:"uppercase" as const, color:GOLD, background:GOLD_S, border:`1px solid ${GOLD}`, padding:"8px 18px", cursor:"pointer" }}>
+          + NOMINATE EMPLOYEE
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── DASHBOARD ────────────────────────────────────────────────────────────
   const renderDashboard = () => (
-    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-      {/* Company header card */}
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${GB}`, overflow:"hidden", position:"relative" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},rgba(201,168,76,0.3),transparent)` }} />
-        <div style={{ padding:isMobile?"18px 16px":"22px 24px" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10, marginBottom:12 }}>
-            <div>
-              <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?18:22, color:TEXT, fontWeight:700 }}>{co?.company_name||"—"}</div>
-              <div style={{ fontSize:11, color:TEXT2, marginTop:5 }}>
-                {co?.abn && <span>ABN {co.abn} · </span>}
-                Ref: <span style={{ color:G, fontFamily:"monospace", fontWeight:700 }}>{co?.client_ref||"—"}</span>
-                {co?.books_customer_number && <span style={{ color:TEXT2 }}> · No. {co.books_customer_number}</span>}
-              </div>
-            </div>
-            <Badge text="Active" colour={GREEN} bg={GND} border={GNB} />
-          </div>
-          <div style={{ paddingTop:12, borderTop:`1px solid ${BORDER}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            <div>
-              <div style={{ fontSize:10, color:MUTED, textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:3 }}>Total Fees</div>
-              <div style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:G }}>{fmtMoney(totalFees)}</div>
-            </div>
-            <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize:10, color:MUTED, textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:3 }}>Nominees</div>
-              <div style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:TEXT }}>{co?.total_nominees||0}</div>
-            </div>
-          </div>
+    <div>
+      {/* Title */}
+      <div style={{ marginBottom:24 }}>
+        <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, letterSpacing:"0.35em", color:GOLD, textTransform:"uppercase" as const, marginBottom:8 }}>Corporate Intelligence</div>
+        <h1 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:isMobile?36:52, fontWeight:300, letterSpacing:"-0.02em", lineHeight:1.1, margin:"0 0 8px", color:INK }}>
+          {co?.company_name || "Dashboard"}
+        </h1>
+        <div style={{ fontSize:12, color:MUTE, lineHeight:1.5 }}>
+          {co?.abn && <span>ABN {co.abn} · </span>}
+          Ref: <span style={{ color:GOLD, fontFamily:"'JetBrains Mono','Courier New',monospace" }}>{co?.client_ref||"—"}</span>
+          {co?.books_customer_number && <span> · Customer No: {co.books_customer_number}</span>}
         </div>
+      </div>
+
+      {/* KPI grid — 2×3 on mobile, 5-col on desktop */}
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(5,1fr)", gap:1, background:LINE, border:`1px solid ${LINE}`, marginBottom:28 }}>
+        {[
+          { label:"Total Nominees", value:String(co?.total_nominees??0), meta:"sponsored", gold:true },
+          { label:"Baseline", value:String(co?.baseline_total??0), meta:"entry tier" },
+          { label:"NV1", value:String(co?.nv1_total??0), meta:"dominant", gold:true },
+          { label:"NV2", value:String(co?.nv2_total??0), meta:"premium tier" },
+          { label:"AusClear Fees", value:fmtMoney(co?.total_fees_minus_agsva), meta:"ex AGSVA", gold:false },
+        ].map((s,i) => (
+          <div key={i} style={{ background:PANEL, padding:isMobile?"16px 14px":"22px 20px" }}>
+            <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:MUTE, letterSpacing:"0.18em", textTransform:"uppercase" as const, marginBottom:10 }}>{s.label}</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:isMobile?28:36, fontWeight:400, lineHeight:1, marginBottom:6, color:s.gold?GOLD:INK }}>{s.value}</div>
+            <div style={{ fontSize:10, color:MUTE, fontFamily:"'JetBrains Mono','Courier New',monospace" }}>{s.meta}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Personnel preview */}
+      <div style={{ marginBottom:20, paddingBottom:8, borderBottom:`1px solid ${LINE}`, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+        <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:isMobile?20:26, fontWeight:400, color:INK, margin:0 }}>
+          <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, color:GOLD, letterSpacing:"0.2em", marginRight:10 }}>V</span>
+          Personnel Register
+        </h2>
+        <button onClick={() => setPage("Personnel")} style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, letterSpacing:"0.12em", textTransform:"uppercase" as const, color:GOLD, background:"transparent", border:`1px solid ${LINE}`, padding:"5px 12px", cursor:"pointer" }}>
+          VIEW ALL →
+        </button>
+      </div>
+      <div style={{ border:`1px solid ${LINE}`, background:LINE, marginBottom:28 }}>
+        {personnel.slice(0,5).map(p => (
+          <DealCard key={p.id} p={p} co={co} onClick={() => setSelectedP(p)} />
+        ))}
+      </div>
+
+      {/* Footer obs box */}
+      <div style={{ background:PANEL, border:`1px solid ${LINE}`, borderLeft:`2px solid ${GOLD}`, padding:"12px 16px", fontSize:12, color:MUTE, lineHeight:1.6 }}>
+        <strong style={{ color:GOLD, fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, letterSpacing:"0.2em", textTransform:"uppercase" as const, display:"block", marginBottom:6 }}>SNAPSHOT</strong>
+        AusClear Fees = Application ($400) + Year 1 Sponsorship ($1,460) per employee. AGSVA vetting fees excluded — these are government pass-through costs.
+      </div>
+    </div>
+  );
+
+  // ── FINANCIALS ────────────────────────────────────────────────────────────
+  const renderFinancials = () => (
+    <div>
+      <div style={{ marginBottom:20, paddingBottom:8, borderBottom:`1px solid ${LINE}` }}>
+        <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:28, fontWeight:400, color:INK, margin:0 }}>
+          <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, color:GOLD, letterSpacing:"0.2em", marginRight:10 }}>II</span>
+          Fee Summary
+        </h2>
       </div>
 
       {/* KPI row */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:1, background:LINE, border:`1px solid ${LINE}`, marginBottom:20 }}>
         {[
-          { label:"Baseline", value:co?.baseline_total??0, col:TEXT2, bg:"rgba(255,255,255,0.06)", border:"rgba(255,255,255,0.1)" },
-          { label:"NV1", value:co?.nv1_total??0, col:BLUE, bg:BLD, border:"rgba(147,197,253,0.25)" },
-          { label:"NV2", value:co?.nv2_total??0, col:G, bg:GD, border:GB },
+          { label:"Total Fees", value:fmtMoney(totalFees), gold:true },
+          { label:"Application Fees", value:fmtMoney(co?.total_application_fees) },
+          { label:"Sponsorship Fees", value:fmtMoney(co?.total_sponsorship_fees) },
+          { label:"AGSVA Fees", value:fmtMoney(co?.total_agsva_fees) },
         ].map((s,i) => (
-          <div key={i} style={{ background:CARD, borderRadius:12, border:`1px solid ${s.border}`, overflow:"hidden" }}>
-            <div style={{ height:2, background:s.col }} />
-            <div style={{ padding:"12px 14px" }}>
-              <div style={{ fontFamily:"Georgia,serif", fontSize:26, fontWeight:700, color:TEXT, lineHeight:1.1 }}>{s.value}</div>
-              <div style={{ fontSize:10, color:TEXT2, marginTop:3, textTransform:"uppercase", letterSpacing:"1.5px" }}>{s.label}</div>
-            </div>
+          <div key={i} style={{ background:PANEL, padding:"18px 16px" }}>
+            <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:MUTE, letterSpacing:"0.18em", textTransform:"uppercase" as const, marginBottom:8 }}>{s.label}</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:isMobile?24:32, fontWeight:400, lineHeight:1, color:s.gold?GOLD:INK }}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Personnel register */}
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${GB}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-        <div style={{ padding:"16px 20px 12px", borderBottom:`1px solid ${BORDER}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>
-            Nominated Personnel <span style={{ fontSize:12, color:MUTED, fontFamily:"inherit" }}>({personnel.length})</span>
-          </div>
-          <button onClick={() => setPage("Personnel")} style={{ fontSize:11, color:G, background:GD, border:`1px solid ${GB}`, borderRadius:8, padding:"6px 12px", cursor:"pointer", fontWeight:700, fontFamily:"inherit" }}>View All</button>
-        </div>
-        <div>
-          {personnel.length === 0 && <div style={{ padding:32, textAlign:"center", color:MUTED, fontSize:13 }}>No personnel nominated yet.</div>}
-          {personnel.slice(0,5).map((p,i) => (
-            <div key={p.id} onClick={() => setSelectedP(p)}
-              style={{ display:"flex", gap:12, alignItems:"center", padding:"14px 20px", borderBottom:i<Math.min(personnel.length,5)-1?`1px solid ${BORDER}`:"none", cursor:"pointer" }}
-              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"}
-              onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}>
-              {/* Stage indicator */}
-              <div style={{ width:26, height:26, borderRadius:"50%", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
-                background: p.stage?.toLowerCase().includes("granted") ? "#059669" : p.status==="pending" ? G : "rgba(255,255,255,0.1)",
-                border: p.stage?.toLowerCase().includes("granted") ? "2px solid #059669" : p.status==="pending" ? `2px solid ${G}` : "2px solid rgba(255,255,255,0.15)" }}>
-                {p.stage?.toLowerCase().includes("granted") ? (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                ) : p.status==="pending" ? (
-                  <div style={{ width:6, height:6, borderRadius:"50%", background:BG }} />
-                ) : (
-                  <div style={{ width:6, height:6, borderRadius:"50%", background:"rgba(255,255,255,0.4)" }} />
-                )}
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:13, color:TEXT, fontWeight:600, marginBottom:2 }}>{p.employee_name}</div>
-                <div style={{ fontSize:11, color:TEXT2 }}>{p.stage||"—"}</div>
-              </div>
-              <div style={{ display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
-                <Badge text={clrLabel(p.clearance_type)} colour={clrColour(p.clearance_type)} bg={clrBg(p.clearance_type)} border={clrBorder(p.clearance_type)} />
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity:0.2 }}><polyline points="4,3 9,7 4,11" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Fee summary card */}
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-        <div style={{ padding:"16px 20px 12px", borderBottom:`1px solid ${BORDER}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>Fee Summary</div>
-          <button onClick={() => setPage("Financials")} style={{ fontSize:11, color:G, background:GD, border:`1px solid ${GB}`, borderRadius:8, padding:"6px 12px", cursor:"pointer", fontWeight:700, fontFamily:"inherit" }}>Details</button>
+      {/* Breakdown panel */}
+      <div style={{ background:PANEL, border:`1px solid ${LINE}`, marginBottom:16 }}>
+        <div style={{ padding:"14px 18px", borderBottom:`1px solid ${LINE}` }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:18, color:INK, fontWeight:500 }}>Fee Breakdown</div>
+          <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:MUTE, letterSpacing:"0.12em", textTransform:"uppercase" as const, marginTop:4 }}>Application + Sponsorship · ex AGSVA</div>
         </div>
         {[
-          { label:"Application Fees", value:co?.total_application_fees },
-          { label:"Sponsorship Fees", value:co?.total_sponsorship_fees },
-          { label:"AGSVA Fees", value:co?.total_agsva_fees },
+          { label:"Application Fees", value:fmtMoney(co?.total_application_fees), sub:`${co?.total_nominees||0} × $400` },
+          { label:"Sponsorship Fees", value:fmtMoney(co?.total_sponsorship_fees), sub:"Year 1 at $1,460/employee" },
+          { label:"AGSVA Pass-Through", value:fmtMoney(co?.total_agsva_fees), sub:"Government fees at cost" },
+          { label:"AusClear Fees (ex-AGSVA)", value:fmtMoney(co?.total_fees_minus_agsva), sub:"Application + Sponsorship only" },
         ].map((row,i,arr) => (
-          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 20px", borderBottom:i<arr.length-1?`1px solid ${BORDER}`:"none" }}>
-            <div style={{ fontSize:13, color:TEXT2 }}>{row.label}</div>
-            <div style={{ fontSize:14, fontWeight:700, color:G, fontFamily:"monospace" }}>{fmtMoney(row.value)}</div>
-          </div>
-        ))}
-        <div style={{ padding:"13px 20px", background:"rgba(201,168,76,0.04)", borderTop:`1px solid ${GB}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontSize:13, fontWeight:700, color:TEXT }}>Total</div>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:18, fontWeight:700, color:G }}>{fmtMoney(totalFees)}</div>
-        </div>
-      </div>
-
-      {/* Activity */}
-      {activity.length > 0 && (
-        <div style={{ background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, overflow:"hidden" }}>
-          <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-          <div style={{ padding:"16px 20px 12px", borderBottom:`1px solid ${BORDER}` }}>
-            <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>Recent Activity</div>
-          </div>
-          {activity.slice(0,5).map((a,i) => (
-            <div key={a.id} style={{ display:"flex", gap:12, padding:"12px 20px", borderBottom:i<Math.min(activity.length,5)-1?`1px solid ${BORDER}`:"none", alignItems:"flex-start" }}>
-              <div style={{ width:8, height:8, borderRadius:"50%", background:G, flexShrink:0, marginTop:4 }} />
-              <div>
-                <div style={{ fontSize:12, color:TEXT }}>{a.event}</div>
-                <div style={{ fontSize:11, color:MUTED, marginTop:2 }}>{fmtDate(a.event_date)}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // ── PERSONNEL PAGE ────────────────────────────────────────────────────────
-  const renderPersonnel = () => (
-    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?18:20, color:TEXT, fontWeight:700 }}>
-          Personnel <span style={{ fontSize:13, color:MUTED, fontFamily:"inherit" }}>({personnel.length})</span>
-        </div>
-        <button style={{ background:`linear-gradient(135deg,${G},#b8942e)`, border:"none", borderRadius:8, padding:"10px 18px", color:BG, fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>+ Nominate</button>
-      </div>
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${GB}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-        {personnel.length === 0 && <div style={{ padding:40, textAlign:"center", color:MUTED, fontSize:13 }}>No personnel nominated yet.</div>}
-        {personnel.map((p,i) => {
-          const isGranted = p.stage?.toLowerCase().includes("granted") || p.stage?.toLowerCase().includes("complete");
-          const isPending = p.status === "pending";
-          const dotBg = isGranted ? "#059669" : isPending ? G : "rgba(255,255,255,0.15)";
-          const dotBorder = isGranted ? "#059669" : isPending ? G : "rgba(255,255,255,0.2)";
-          const rowBg = isPending ? "rgba(201,168,76,0.03)" : "transparent";
-          const rowBorder = isPending ? `1px solid rgba(201,168,76,0.12)` : `1px solid transparent`;
-          return (
-            <div key={p.id} onClick={() => setSelectedP(p)}
-              style={{ display:"flex", gap:12, alignItems:"center", padding:"16px 20px", borderBottom:i<personnel.length-1?`1px solid ${BORDER}`:"none", cursor:"pointer", background:rowBg, border:rowBorder }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = rowBg; }}>
-              {/* Stage dot */}
-              <div style={{ width:28, height:28, borderRadius:"50%", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:dotBg, border:`2px solid ${dotBorder}` }}>
-                {isGranted ? (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                ) : isPending ? (
-                  <div style={{ width:7, height:7, borderRadius:"50%", background:BG }} />
-                ) : (
-                  <div style={{ width:7, height:7, borderRadius:"50%", background:"rgba(255,255,255,0.3)" }} />
-                )}
-              </div>
-              {/* Info */}
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:13, color:TEXT, fontWeight:600, marginBottom:2 }}>{p.employee_name}</div>
-                <div style={{ fontSize:11, color:TEXT2, marginBottom:3 }}>{p.stage||"—"}</div>
-                {p.email && <div style={{ fontSize:11, color:MUTED }}>{p.email}</div>}
-              </div>
-              {/* Right col */}
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
-                <Badge text={clrLabel(p.clearance_type)} colour={clrColour(p.clearance_type)} bg={clrBg(p.clearance_type)} border={clrBorder(p.clearance_type)} />
-                <Badge text={p.clearance_request_type||"New"} colour={AMBER} bg={AMD} border={AMB} />
-                {p.batch_date && <div style={{ fontSize:10, color:MUTED }}>{fmtDate(p.batch_date)}</div>}
-              </div>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity:0.2, flexShrink:0 }}><polyline points="4,3 9,7 4,11" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // ── FINANCIALS PAGE ───────────────────────────────────────────────────────
-  const renderFinancials = () => (
-    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-      {/* Hero */}
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${GB}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},rgba(201,168,76,0.3),transparent)` }} />
-        <div style={{ padding:isMobile?"20px 18px":"24px 28px" }}>
-          <div style={{ fontSize:10, color:G, textTransform:"uppercase", letterSpacing:"2px", fontWeight:700, marginBottom:6 }}>Total Fees</div>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?36:44, fontWeight:700, color:TEXT, marginBottom:8 }}>{fmtMoney(totalFees)}</div>
-          <div style={{ fontSize:12, color:TEXT2 }}>{co?.total_nominees} sponsored employees · AGSVA fees included</div>
-        </div>
-      </div>
-
-      {/* Breakdown */}
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${BORDER}` }}>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>Fee Breakdown</div>
-        </div>
-        {[
-          { label:"Application Fees", value:co?.total_application_fees, sub:`${co?.total_nominees||0} × $400 per employee` },
-          { label:"Sponsorship Fees", value:co?.total_sponsorship_fees, sub:"Year 1 sponsorship at $1,460/employee" },
-          { label:"AGSVA Pass-Through Fees", value:co?.total_agsva_fees, sub:"Government vetting fees at cost" },
-          { label:"AusClear Fees (ex-AGSVA)", value:co?.total_fees_minus_agsva, sub:"Application + Sponsorship only" },
-        ].map((row,i,arr) => (
-          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 20px", borderBottom:i<arr.length-1?`1px solid ${BORDER}`:"none" }}>
+          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:i<arr.length-1?`1px solid ${LINE}`:"none" }}>
             <div>
-              <div style={{ fontSize:13, color:TEXT }}>{row.label}</div>
-              {row.sub && <div style={{ fontSize:11, color:MUTED, marginTop:2 }}>{row.sub}</div>}
+              <div style={{ fontSize:13, color:INK }}>{row.label}</div>
+              {row.sub && <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:DIM, marginTop:3, letterSpacing:"0.05em" }}>{row.sub}</div>}
             </div>
-            <div style={{ fontSize:15, fontWeight:700, color:G, fontFamily:"monospace" }}>{fmtMoney(row.value)}</div>
+            <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:14, color:GOLD, fontWeight:500 }}>{row.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Application types */}
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${BORDER}` }}>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>Application Types</div>
+      {/* Type breakdown */}
+      <div style={{ background:PANEL, border:`1px solid ${LINE}` }}>
+        <div style={{ padding:"14px 18px", borderBottom:`1px solid ${LINE}` }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:18, color:INK, fontWeight:500 }}>Application Types</div>
         </div>
         {[
-          { label:"New Clearances", value:co?.new_total??0, col:GREEN, bg:GND, border:GNB },
-          { label:"Upgrades", value:co?.upgrade_total??0, col:AMBER, bg:AMD, border:AMB },
-          { label:"Transfers", value:co?.transfer_total??0, col:BLUE, bg:BLD, border:"rgba(147,197,253,0.3)" },
+          { label:"New Clearances", value:co?.new_total??0, col:GREEN },
+          { label:"Upgrades",       value:co?.upgrade_total??0, col:GOLD },
+          { label:"Transfers",      value:co?.transfer_total??0, col:BLUE },
         ].map((row,i,arr) => (
-          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 20px", borderBottom:i<arr.length-1?`1px solid ${BORDER}`:"none" }}>
+          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 18px", borderBottom:i<arr.length-1?`1px solid ${LINE}`:"none" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ width:8, height:8, borderRadius:"50%", background:row.col, flexShrink:0 }} />
-              <span style={{ fontSize:13, color:TEXT }}>{row.label}</span>
+              <div style={{ width:7, height:7, borderRadius:"50%", background:row.col }} />
+              <span style={{ fontSize:13, color:INK }}>{row.label}</span>
             </div>
-            <Badge text={String(row.value)} colour={row.col} bg={row.bg} border={row.border} />
+            <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:13, color:row.col }}>{row.value}</span>
           </div>
         ))}
       </div>
     </div>
   );
 
-  // ── ACTIVITY PAGE ─────────────────────────────────────────────────────────
+  // ── ACTIVITY ──────────────────────────────────────────────────────────────
   const renderActivity = () => (
-    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-      <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?18:20, color:TEXT, fontWeight:700 }}>Activity Log</div>
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${GB}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
+    <div>
+      <div style={{ marginBottom:16, paddingBottom:8, borderBottom:`1px solid ${LINE}` }}>
+        <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:28, fontWeight:400, color:INK, margin:0 }}>
+          <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, color:GOLD, letterSpacing:"0.2em", marginRight:10 }}>IV</span>
+          Activity Log
+        </h2>
+      </div>
+      <div style={{ border:`1px solid ${LINE}`, background:LINE }}>
         {activity.length === 0
-          ? <div style={{ padding:40, textAlign:"center", color:MUTED, fontSize:13 }}>No activity yet.</div>
+          ? <div style={{ background:PANEL, padding:"32px 18px", textAlign:"center", color:MUTE, fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10 }}>NO ACTIVITY</div>
           : activity.map((a,i) => (
-          <div key={a.id} style={{ display:"flex", gap:12, padding:"14px 20px", borderBottom:i<activity.length-1?`1px solid ${BORDER}`:"none", alignItems:"flex-start" }}>
-            <div style={{ width:32, height:32, borderRadius:8, flexShrink:0, background:GD, border:`1px solid ${GB}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <div style={{ width:8, height:8, borderRadius:"50%", background:G }} />
-            </div>
-            <div>
-              <div style={{ fontSize:13, color:TEXT }}>{a.event}</div>
-              <div style={{ fontSize:11, color:MUTED, marginTop:2 }}>{fmtDate(a.event_date)}</div>
+          <div key={a.id} style={{ background:PANEL, padding:"12px 16px", borderBottom:i<activity.length-1?`1px solid ${LINE}`:"none" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
+              <div style={{ fontSize:13, color:INK, lineHeight:1.4 }}>{a.event}</div>
+              <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:DIM, whiteSpace:"nowrap", marginTop:2 }}>{fmtDate(a.event_date)}</div>
             </div>
           </div>
         ))}
@@ -402,33 +393,39 @@ export default function Dashboard() {
     </div>
   );
 
-  // ── SUPPORT PAGE ──────────────────────────────────────────────────────────
+  // ── SUPPORT ───────────────────────────────────────────────────────────────
   const renderSupport = () => (
-    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-      <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?18:20, color:TEXT, fontWeight:700 }}>Support</div>
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${GB}`, overflow:"hidden" }}>
-        <div style={{ height:3, background:`linear-gradient(90deg,${G},transparent)` }} />
-        <div style={{ padding:"16px 20px", borderBottom:`1px solid ${BORDER}` }}>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>Contact AusClear</div>
-        </div>
-        {[
-          { label:"Phone", value:"1300 027 423" },
-          { label:"Email", value:"support@ausclear.com.au" },
-          { label:"Hours", value:"Mon — Fri, 9am — 5pm ACST" },
-          { label:"Address", value:"82 Onkaparinga Valley Road, Woodside SA 5244" },
-        ].map((item,i,arr) => (
-          <div key={i} style={{ padding:"14px 20px", borderBottom:i<arr.length-1?`1px solid ${BORDER}`:"none" }}>
-            <div style={{ fontSize:10, color:G, textTransform:"uppercase", letterSpacing:"1.5px", fontWeight:700, marginBottom:3 }}>{item.label}</div>
-            <div style={{ fontSize:13, color:TEXT }}>{item.value}</div>
-          </div>
-        ))}
+    <div>
+      <div style={{ marginBottom:16, paddingBottom:8, borderBottom:`1px solid ${LINE}` }}>
+        <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:28, fontWeight:400, color:INK, margin:0 }}>Support</h2>
       </div>
-      <div style={{ background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, padding:"20px", overflow:"hidden" }}>
-        <div style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700, marginBottom:10 }}>Knowledge Base</div>
-        <p style={{ fontSize:13, color:TEXT2, lineHeight:1.5, margin:"0 0 16px" }}>Browse 120+ articles on security clearances, AGSVA processes, and DISP requirements.</p>
-        <a href="https://support.ausclear.com.au" target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-          <button style={{ background:`linear-gradient(135deg,${G},#b8942e)`, border:"none", borderRadius:8, padding:"12px 22px", color:BG, fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>Visit Knowledge Base</button>
-        </a>
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:1, background:LINE, border:`1px solid ${LINE}`, marginBottom:16 }}>
+        <div style={{ background:PANEL, padding:isMobile?"18px 16px":"24px 20px" }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:18, color:INK, marginBottom:14 }}>Contact AusClear</div>
+          {[
+            { label:"Phone",   value:"1300 027 423" },
+            { label:"Email",   value:"support@ausclear.com.au" },
+            { label:"Hours",   value:"Mon–Fri, 9am–5pm ACST" },
+            { label:"Address", value:"82 Onkaparinga Valley Road, Woodside SA 5244" },
+          ].map((item,i) => (
+            <div key={i} style={{ marginBottom:12 }}>
+              <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:GOLD, textTransform:"uppercase" as const, letterSpacing:"0.15em", marginBottom:3 }}>{item.label}</div>
+              <div style={{ fontSize:12, color:MUTE }}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:PANEL, padding:isMobile?"18px 16px":"24px 20px" }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:18, color:INK, marginBottom:12 }}>Knowledge Base</div>
+          <p style={{ fontSize:12, color:MUTE, lineHeight:1.6, margin:"0 0 20px" }}>Browse 120+ articles on security clearances, AGSVA processes, and DISP requirements.</p>
+          <a href="https://support.ausclear.com.au" target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+            <button style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, letterSpacing:"0.15em", textTransform:"uppercase" as const, color:GOLD, background:GOLD_S, border:`1px solid ${GOLD}`, padding:"10px 18px", cursor:"pointer" }}>
+              VISIT KNOWLEDGE BASE →
+            </button>
+          </a>
+        </div>
+      </div>
+      <div style={{ background:PANEL, border:`1px solid ${LINE}`, borderLeft:`2px solid ${GOLD}`, padding:"12px 16px", fontSize:11, color:DIM, fontFamily:"'JetBrains Mono','Courier New',monospace", letterSpacing:"0.05em", lineHeight:1.6 }}>
+        NEPHTHYS PTY LTD T/AS AUSCLEAR · ABN 70 628 031 587 · DISP-ACCREDITED
       </div>
     </div>
   );
@@ -441,8 +438,8 @@ export default function Dashboard() {
   if (loading) return (
     <div style={{ minHeight:"100vh", background:BG, display:"flex", alignItems:"center", justifyContent:"center" }}>
       <div style={{ textAlign:"center" }}>
-        <div style={{ width:40, height:40, border:`3px solid ${BORDER}`, borderTopColor:G, borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 16px" }} />
-        <p style={{ color:TEXT2, fontSize:14 }}>Loading your dashboard...</p>
+        <div style={{ width:36, height:36, border:`2px solid ${LINE}`, borderTopColor:GOLD, borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 16px" }} />
+        <p style={{ color:MUTE, fontSize:11, fontFamily:"'JetBrains Mono','Courier New',monospace", letterSpacing:"0.15em" }}>LOADING...</p>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -450,67 +447,72 @@ export default function Dashboard() {
 
   if (error) return (
     <div style={{ minHeight:"100vh", background:BG, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:CARD, borderRadius:16, padding:32, border:`1px solid ${BORDER}`, textAlign:"center" }}>
-        <p style={{ color:RED, fontSize:14, marginBottom:16 }}>{error}</p>
-        <button onClick={() => router.push("/login")} style={{ background:`linear-gradient(135deg,${G},#b8942e)`, border:"none", borderRadius:10, padding:"12px 24px", color:BG, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Back to Login</button>
+      <div style={{ background:PANEL, border:`1px solid ${LINE}`, padding:32, maxWidth:340, textAlign:"center" }}>
+        <p style={{ color:RED, fontSize:12, marginBottom:16, fontFamily:"'JetBrains Mono','Courier New',monospace" }}>{error}</p>
+        <button onClick={() => router.push("/login")} style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, letterSpacing:"0.15em", textTransform:"uppercase" as const, color:GOLD, background:GOLD_S, border:`1px solid ${GOLD}`, padding:"8px 18px", cursor:"pointer" }}>
+          BACK TO LOGIN
+        </button>
       </div>
     </div>
   );
 
   return (
-    <div style={{ minHeight:"100vh", background:BG, color:TEXT, fontSize:14, overflowX:"hidden" }}>
-      <Drawer />
+    <div style={{ minHeight:"100vh", background:BG, color:INK, fontSize:14, overflowX:"hidden" }}>
+      {/* Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+      {/* Drawer */}
+      {selectedP && <Drawer p={selectedP} onClose={() => setSelectedP(null)} />}
 
       {/* Sidebar overlay */}
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:99 }} />}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:99 }} />}
 
       {/* Sidebar */}
-      <div style={{ position:"fixed", top:0, left:0, bottom:0, width:240, background:CARD, zIndex:100, borderRight:`1px solid ${BORDER}`, display:"flex", flexDirection:"column", transform:sidebarOpen?"translateX(0)":"translateX(-100%)", transition:"transform 0.3s cubic-bezier(0.4,0,0.2,1)", overflowY:"auto" }}>
-        <div style={{ padding:"24px 20px 20px", borderBottom:`1px solid ${BORDER}` }}>
-          <img src="https://ausclear.au/AusClear-Light-Transparent.png" alt="AusClear" style={{ height:28 }} />
-          <div style={{ fontSize:10, color:G, textTransform:"uppercase", letterSpacing:"2px", fontWeight:700, marginTop:6 }}>Corporate Portal</div>
+      <div style={{ position:"fixed", top:0, left:0, bottom:0, width:220, background:PANEL, zIndex:100, borderRight:`1px solid ${LINE}`, display:"flex", flexDirection:"column", transform:sidebarOpen?"translateX(0)":"translateX(-100%)", transition:"transform 0.3s ease" }}>
+        <div style={{ padding:"22px 20px 18px", borderBottom:`1px solid ${LINE}` }}>
+          <img src="https://ausclear.au/AusClear-Light-Transparent.png" alt="AusClear" style={{ height:26 }} />
+          <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:8, color:GOLD, textTransform:"uppercase", letterSpacing:"0.25em", marginTop:6 }}>Corporate Portal</div>
         </div>
         {co && (
-          <div style={{ padding:"14px 20px", borderBottom:`1px solid ${BORDER}`, background:"rgba(201,168,76,0.04)" }}>
-            <div style={{ fontSize:12, color:G, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{co.company_name}</div>
-            <div style={{ fontSize:11, color:MUTED, marginTop:2 }}>{data?.user?.email}</div>
+          <div style={{ padding:"12px 20px", borderBottom:`1px solid ${LINE}`, background:"rgba(201,168,76,0.04)" }}>
+            <div style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, color:GOLD, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", letterSpacing:"0.08em" }}>{co.company_name.toUpperCase()}</div>
+            <div style={{ fontSize:10, color:DIM, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{data?.user?.email}</div>
           </div>
         )}
-        <nav style={{ flex:1, padding:"12px 10px" }}>
+        <nav style={{ flex:1, padding:"10px 0" }}>
           {NAV.map(item => {
             const active = page === item;
             return (
               <button key={item} onClick={() => { setPage(item); setSidebarOpen(false); }}
-                style={{ display:"flex", alignItems:"center", width:"100%", padding:"12px 14px", borderRadius:10, border:"none", background:active?GD:"transparent", color:active?G:TEXT2, fontSize:13, fontWeight:active?700:500, cursor:"pointer", fontFamily:"inherit", textAlign:"left", marginBottom:2 }}>
+                style={{ display:"block", width:"100%", padding:"11px 20px", border:"none", background:active?"rgba(201,168,76,0.08)":"transparent", color:active?GOLD:MUTE, fontSize:12, cursor:"pointer", fontFamily:"inherit", textAlign:"left", borderLeft:active?`2px solid ${GOLD}`:"2px solid transparent" }}>
                 {item}
               </button>
             );
           })}
         </nav>
-        <div style={{ padding:"12px 10px 20px", borderTop:`1px solid ${BORDER}` }}>
-          <button onClick={() => router.push("/logout")} style={{ display:"flex", alignItems:"center", gap:8, width:"100%", padding:"12px 14px", borderRadius:10, border:"none", background:"transparent", color:TEXT2, fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>
-            Sign Out
+        <div style={{ padding:"10px 0", borderTop:`1px solid ${LINE}` }}>
+          <button onClick={() => router.push("/logout")} style={{ display:"block", width:"100%", padding:"10px 20px", border:"none", background:"transparent", color:DIM, fontSize:11, cursor:"pointer", fontFamily:"'JetBrains Mono','Courier New',monospace", textAlign:"left", letterSpacing:"0.1em" }}>
+            SIGN OUT
           </button>
         </div>
       </div>
 
       {/* Topbar */}
-      <div style={{ position:"sticky", top:0, zIndex:50, background:`${CARD}ee`, backdropFilter:"blur(16px)", borderBottom:`1px solid ${BORDER}`, padding:"0 16px", height:56, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div style={{ position:"sticky", top:0, zIndex:50, background:`${PANEL}f0`, backdropFilter:"blur(12px)", borderBottom:`1px solid ${LINE}`, padding:"0 16px", height:52, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <button onClick={() => setSidebarOpen(true)} style={{ background:"none", border:"none", cursor:"pointer", padding:4, color:TEXT2, fontSize:20, lineHeight:1 }}>☰</button>
-          <span style={{ fontFamily:"Georgia,serif", fontSize:15, color:TEXT, fontWeight:700 }}>{page}</span>
+          <button onClick={() => setSidebarOpen(true)} style={{ background:"none", border:"none", cursor:"pointer", padding:4, color:MUTE, fontSize:18, lineHeight:1 }}>☰</button>
+          <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:10, color:MUTE, letterSpacing:"0.15em", textTransform:"uppercase" as const }}>{page}</span>
         </div>
-        <div style={{ fontSize:11, color:G, fontWeight:700 }}>{co?.company_name||""}</div>
+        <span style={{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:9, color:GOLD, letterSpacing:"0.12em" }}>{co?.company_name?.toUpperCase()||""}</span>
       </div>
 
-      {/* Main content */}
-      <main style={{ padding:isMobile?"16px 12px 80px":"20px 16px 60px", maxWidth:720, margin:"0 auto" }}>
-        {pages[page]?.()}
-      </main>
-
-      <style>{`
-        @keyframes portalPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.15)} }
-      `}</style>
+      {/* Main */}
+      <div style={{ background:`radial-gradient(circle at 15% 0%, rgba(201,168,76,0.06) 0%, transparent 40%), ${BG}`, minHeight:"calc(100vh - 52px)" }}>
+        <main style={{ padding:isMobile?"16px 14px 80px":"28px 20px 60px", maxWidth:900, margin:"0 auto" }}>
+          {pages[page]?.()}
+        </main>
+      </div>
     </div>
   );
 }
