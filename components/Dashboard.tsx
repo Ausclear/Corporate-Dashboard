@@ -21,31 +21,20 @@ type A = { id: string; event: string; event_date: string };
 type Data = { company: Co; personnel: P[]; activity: A[]; user: { email: string } };
 
 // ── Corporate pipeline stages ─────────────────────────────────────────────────
-const CORP_STAGES = [
-  "Onboard Corporate Account",
-  "Prepare Contract",
-  "Contract Sent",
-  "Awaiting Signature",
-  "Contracts Signed",
-  "Create Invoice",
-  "Invoice Sent",
-  "Invoice Outstanding",
-  "Invoice Paid",
-  "Corporate Approved",
-];
-// Map Zoho stage names (identity mapping - use exact Zoho values)
-const STAGE_MAP: Record<string, string> = {
-  "Onboard Corporate Account": "Onboard Corporate Account",
-  "Prepare Contract": "Prepare Contract",
-  "Contract Sent": "Contract Sent",
-  "Awaiting Signature": "Awaiting Signature",
-  "Contracts Signed": "Contracts Signed",
-  "Create Invoice": "Create Invoice",
-  "Invoice Sent": "Invoice Sent",
-  "Invoice Outstanding": "Invoice Outstanding",
-  "Invoice Paid": "Invoice Paid",
-  "Corporate Approved": "Corporate Approved",
+// Zoho stage -> client-friendly label
+const STAGE_LABELS: Record<string, string> = {
+  "Onboard Corporate Account": "Account Setup",
+  "Prepare Contract":          "Preparing Agreement",
+  "Contract Sent":             "Agreement Sent",
+  "Awaiting Signature":        "Awaiting Signature",
+  "Contracts Signed":          "Agreement Signed",
+  "Create Invoice":            "Invoice Preparation",
+  "Invoice Sent":              "Invoice Sent",
+  "Invoice Outstanding":       "Payment Pending",
+  "Invoice Paid":              "Payment Received",
+  "Corporate Approved":        "Active & Approved",
 };
+const CORP_STAGES = Object.keys(STAGE_LABELS);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const $k = (n?: number | null) => n != null ? `$${Number(n).toLocaleString("en-AU")}` : "—";
@@ -113,7 +102,8 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
           const tLeft  = isFirst ? x + 4 : x + TIP + 3;
           const tRight = isLast  ? x + W - 4 : x + W - TIP - 3;
           const tCx    = (tLeft + tRight) / 2;
-          const [line1, line2] = splitLabel(stage.toUpperCase());
+          const label = STAGE_LABELS[stage] || stage;
+          const [line1, line2] = splitLabel(label.toUpperCase());
 
           return (
             <g key={stage}>
@@ -259,7 +249,7 @@ export default function Dashboard() {
       <div style={{ background: "#111318", border: "1px solid #252b38", padding: "16px 18px" }}>
         <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
         <div style={{ marginTop: 12, fontSize: 12, color: "#7a7a82" }}>
-          Current stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{accountStage}</span>
+          Current stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
         </div>
       </div>
 
@@ -278,7 +268,7 @@ export default function Dashboard() {
                 border: isActive ? "none" : isDone ? "none" : "2px solid #3a3a52" }} />
               <div style={{ fontSize: 13, fontWeight: isActive ? 600 : 400,
                 color: isActive ? "#e8e5de" : isDone ? "rgba(255,255,255,0.5)" : "#3a3a52" }}>
-                {stage}
+                {STAGE_LABELS[stage] || stage}
               </div>
               {isActive && (
                 <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#c9a84c",
