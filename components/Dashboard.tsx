@@ -2,26 +2,28 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 type Co = {
-  company_name: string; abn: string; account_number: string; client_ref?: string;
+  company_name: string; abn: string; account_number: string;
   email: string; phone: string;
   total_nominees: number; new_total: number; upgrade_total: number; transfer_total: number;
   baseline_total: number; nv1_total: number; nv2_total: number;
   total_agsva_fees: number; total_application_fees: number;
-  total_sponsorship_fees: number; total_fees_minus_agsva: number; corp_deal_stage?: string; corp_deal_amount?: number;
+  total_sponsorship_fees: number; total_fees_minus_agsva: number; total_fees: number;
+  corp_deal_stage: string; corp_deal_name?: string;
+  corp_deal_amount?: number; corp_deal_created?: string;
+  pipeline_stages?: string[];
 };
 type P = {
   id: string; employee_name: string; email: string; mobile: string;
-  clearance_type: string; clearance_request_type: string; stage: string; status: string;
-  batch_date: string | null; onboarding_status?: string | null;
-  revalidation_date?: string | null; linked_deal_name?: string | null;
+  clearance_type: string; clearance_request_type: string;
+  stage: string; onboarding_status?: string; batch_date: string | null;
+  linked_deal_name?: string; revalidation_date?: string;
 };
 type A = { id: string; event: string; event_date: string };
 type Data = { company: Co; personnel: P[]; activity: A[]; user: { email: string } };
 
-// ── Corporate pipeline stages ─────────────────────────────────────────────────
-// Client-friendly labels for Zoho stage names
+// ── Zoho stage -> client-friendly label ───────────────────────────────────────
 const STAGE_LABELS: Record<string, string> = {
   "Onboard Corporate Account": "Account Setup",
   "Prepare Contract":          "Preparing Agreement",
@@ -34,8 +36,9 @@ const STAGE_LABELS: Record<string, string> = {
   "Invoice Paid":              "Payment Received",
   "Corporate Approved":        "Active & Approved",
 };
-// Stages come from Zoho API — not hardcoded
-// CORP_STAGES is set dynamically from co.pipeline_stages after data loads
+
+// Default stages if Zoho pipeline fetch fails
+const DEFAULT_STAGES = Object.keys(STAGE_LABELS);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const $k = (n?: number | null) => n != null ? `$${Number(n).toLocaleString("en-AU")}` : "—";
@@ -49,7 +52,7 @@ const clr = (c: string) =>
   c?.includes("NV1") ? { label: "NV1", col: "#6b9fd4", bg: "rgba(107,159,212,0.15)", bdr: "rgba(107,159,212,0.4)" } :
                        { label: "BSL", col: "#7a7a82", bg: "rgba(122,122,130,0.15)", bdr: "rgba(122,122,130,0.35)" };
 
-function Tag({ t }: { t: ReturnType<typeof clr> }) {
+function Tag({ t }: { t: { label: string; col: string; bg: string; bdr: string } }) {
   return (
     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" as const,
       color: t.col, background: t.bg, border: `1px solid ${t.bdr}`, padding: "2px 8px", borderRadius: 3 }}>
@@ -59,7 +62,6 @@ function Tag({ t }: { t: ReturnType<typeof clr> }) {
 }
 
 // ── SVG Chevron Pipeline ──────────────────────────────────────────────────────
-// Uses SVG polygons — works in every browser, no CSS pseudo-element issues
 function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStage: string }) {
   const H = 34;
   const TIP = 11;
@@ -99,12 +101,9 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
           return (
             <g key={stage}>
               <polygon points={pts} fill={fill} />
-              <text
-                x={tCx} y={H / 2}
-                dominantBaseline="middle" textAnchor="middle"
+              <text x={tCx} y={H/2} dominantBaseline="middle" textAnchor="middle"
                 fill={tCol} fontSize={8} fontWeight={isActive ? 700 : 600}
-                fontFamily="-apple-system,sans-serif"
-              >
+                fontFamily="-apple-system,sans-serif">
                 {label}
               </text>
             </g>
@@ -117,7 +116,7 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [tab, setTab]           = useState<"overview"|"pipeline"|"personnel"|"financials">("overview");
+  const [tab, setTab]           = useState<"overview" | "pipeline" | "personnel" | "financials">("overview");
   const [data, setData]         = useState<Data | null>(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
@@ -136,10 +135,8 @@ export default function Dashboard() {
   const ppl = data?.personnel || [];
   const act = data?.activity  || [];
   const fees = co ? co.total_agsva_fees + co.total_application_fees + co.total_sponsorship_fees : 0;
-
-  // Current account stage — from Zoho we know NETFLIX is "Onboard Corporate Account"
-  const accountStage   = co?.corp_deal_stage || "Onboard Corporate Account";
-  const CORP_STAGES    = co?.pipeline_stages || Object.keys(STAGE_LABELS);
+  const accountStage = co?.corp_deal_stage || "Onboard Corporate Account";
+  const CORP_STAGES  = co?.pipeline_stages || DEFAULT_STAGES;
 
   // ── OVERVIEW ──────────────────────────────────────────────────────────────
   const Overview = () => (
@@ -173,7 +170,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Corporate pipeline preview */}
+      {/* Pipeline preview */}
       <div style={{ background: "#111318", border: "1px solid #252b38" }}>
         <div style={{ padding: "12px 18px", borderBottom: "1px solid #252b38", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#e8e5de" }}>Corporate Pipeline</span>
@@ -181,6 +178,17 @@ export default function Dashboard() {
         </div>
         <div style={{ padding: "12px 18px 14px" }}>
           <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
+          {co?.corp_deal_name && (
+            <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: 11, color: "#7a7a82" }}>
+                <span style={{ color: "#e8e5de", fontWeight: 600 }}>{co.corp_deal_name}</span>
+                {co.corp_deal_created && <span style={{ color: "#4a4a52" }}> · {$d(co.corp_deal_created)}</span>}
+              </div>
+              {(co.corp_deal_amount ?? 0) > 0 && (
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#c9a84c", fontFamily: "monospace" }}>{$k(co.corp_deal_amount)}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -190,19 +198,16 @@ export default function Dashboard() {
           <span style={{ fontSize: 13, fontWeight: 600, color: "#e8e5de" }}>Personnel ({ppl.length})</span>
           <button onClick={() => setTab("personnel")} style={{ fontSize: 11, color: "#c9a84c", background: "none", border: "none", cursor: "pointer", padding: 0 }}>View all →</button>
         </div>
-        {ppl.slice(0, 4).map((p, i) => {
-          const t = clr(p.clearance_type);
-          return (
-            <div key={p.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "11px 18px",
-              borderBottom: i < Math.min(3, ppl.length - 1) ? "1px solid #252b38" : "none" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "#e8e5de" }}>{p.employee_name}</div>
-                <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{p.stage || "—"}</div>
-              </div>
-              <Tag t={t} />
+        {ppl.slice(0, 4).map((p, i) => (
+          <div key={p.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "11px 18px",
+            borderBottom: i < Math.min(3, ppl.length - 1) ? "1px solid #252b38" : "none" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#e8e5de" }}>{p.employee_name}</div>
+              <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{p.stage || "—"}</div>
             </div>
-          );
-        })}
+            <Tag t={clr(p.clearance_type)} />
+          </div>
+        ))}
       </div>
 
       {act.length > 0 && (
@@ -228,15 +233,17 @@ export default function Dashboard() {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div>
         <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.2em", marginBottom: 4 }}>Corporate Onboarding</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>{co?.company_name || "—"} · <span style={{ fontFamily: "monospace", color: "#c9a84c" }}>{co?.account_number || "—"}</span></div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>
+          {co?.company_name || "—"} · <span style={{ fontFamily: "monospace", color: "#c9a84c" }}>{co?.account_number || "—"}</span>
+        </div>
       </div>
 
-      {/* Chevron pipeline */}
+      {/* Chevron */}
       <div style={{ background: "#111318", border: "1px solid #252b38", padding: "16px 18px" }}>
         <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
       </div>
 
-      {/* Batch deal card — sits below the pipeline showing the actual deal */}
+      {/* Batch deal card */}
       {co?.corp_deal_name && (
         <div style={{ background: "#111318", border: "1px solid #252b38", borderLeft: "3px solid #c9a84c" }}>
           <div style={{ padding: "10px 16px", borderBottom: "1px solid #252b38" }}>
@@ -247,10 +254,10 @@ export default function Dashboard() {
               <div style={{ fontSize: 14, fontWeight: 600, color: "#e8e5de", marginBottom: 4 }}>{co.corp_deal_name}</div>
               <div style={{ fontSize: 11, color: "#7a7a82" }}>
                 Stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
-                {co.corp_deal_created && <span style={{ marginLeft: 12 }}>{$d(co.corp_deal_created)}</span>}
+                {co.corp_deal_created && <span style={{ marginLeft: 12, color: "#4a4a52" }}>{$d(co.corp_deal_created)}</span>}
               </div>
             </div>
-            {co.corp_deal_amount > 0 && (
+            {(co.corp_deal_amount ?? 0) > 0 && (
               <div style={{ fontSize: 18, fontWeight: 700, color: "#c9a84c", fontFamily: "monospace" }}>{$k(co.corp_deal_amount)}</div>
             )}
           </div>
@@ -304,14 +311,11 @@ export default function Dashboard() {
           const t = clr(p.clearance_type);
           return (
             <div key={p.id} style={{ borderBottom: i < ppl.length - 1 ? "1px solid #252b38" : "none" }}>
-              {/* Row */}
-              <div
-                onClick={() => setExpanded(open ? null : p.id)}
+              <div onClick={() => setExpanded(open ? null : p.id)}
                 style={{ display: "flex", gap: 14, alignItems: "center", padding: "14px 18px", cursor: "pointer",
                   background: open ? "#161922" : "transparent" }}
                 onMouseEnter={e => { if (!open) (e.currentTarget as HTMLDivElement).style.background = "#161922"; }}
-                onMouseLeave={e => { if (!open) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
-              >
+                onMouseLeave={e => { if (!open) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: "#c9a84c" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#e8e5de" }}>{p.employee_name}</div>
@@ -320,16 +324,15 @@ export default function Dashboard() {
                 <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                   <Tag t={t} />
                   {p.clearance_request_type && (
-                    <span style={{ fontSize: 10, fontWeight: 600, color: "#7a7a82",
-                      background: "rgba(122,122,130,0.12)", border: "1px solid rgba(122,122,130,0.3)",
-                      padding: "2px 7px", borderRadius: 3 }}>{p.clearance_request_type}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "#7a7a82", background: "rgba(122,122,130,0.12)",
+                      border: "1px solid rgba(122,122,130,0.3)", padding: "2px 7px", borderRadius: 3 }}>
+                      {p.clearance_request_type}
+                    </span>
                   )}
                   <span style={{ color: "#4a4a52", fontSize: 16, display: "inline-block",
                     transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>›</span>
                 </div>
               </div>
-
-              {/* Expanded inline detail */}
               {open && (
                 <div style={{ background: "#161922", borderTop: "1px solid #252b38", padding: "16px 18px 20px 40px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 32px" }}>
@@ -387,9 +390,9 @@ export default function Dashboard() {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, background: "#252b38" }}>
         {[
-          { label: "New",      value: co?.new_total ?? 0,      col: "#5cb87a" },
-          { label: "Upgrades", value: co?.upgrade_total ?? 0,  col: "#d4935c" },
-          { label: "Transfers",value: co?.transfer_total ?? 0, col: "#6b9fd4" },
+          { label: "New",       value: co?.new_total ?? 0,      col: "#5cb87a" },
+          { label: "Upgrades",  value: co?.upgrade_total ?? 0,  col: "#d4935c" },
+          { label: "Transfers", value: co?.transfer_total ?? 0, col: "#6b9fd4" },
         ].map((s, i) => (
           <div key={i} style={{ background: "#111318", padding: "14px 16px" }}>
             <div style={{ fontSize: 10, color: "#7a7a82", textTransform: "uppercase" as const, letterSpacing: "0.12em", marginBottom: 6 }}>{s.label}</div>
@@ -423,11 +426,11 @@ export default function Dashboard() {
 
   // ── SHELL ─────────────────────────────────────────────────────────────────
   const TABS = [
-    { key: "overview",   label: "Overview"   },
-    { key: "pipeline",   label: "Pipeline"   },
-    { key: "personnel",  label: "Personnel"  },
-    { key: "financials", label: "Financials" },
-  ] as const;
+    { key: "overview"   as const, label: "Overview"   },
+    { key: "pipeline"   as const, label: "Pipeline"   },
+    { key: "personnel"  as const, label: "Personnel"  },
+    { key: "financials" as const, label: "Financials" },
+  ];
 
   return (
     <div style={{ minHeight: "100vh", background: "#07070a", color: "#e8e5de",
