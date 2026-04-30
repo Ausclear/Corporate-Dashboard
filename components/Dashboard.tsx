@@ -225,28 +225,37 @@ export default function Dashboard() {
 
   // ── PIPELINE ──────────────────────────────────────────────────────────────
   const Pipeline = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div>
         <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.2em", marginBottom: 4 }}>Corporate Onboarding</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>{co?.company_name || "—"} · {co?.client_ref || "NE88966"}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>{co?.company_name || "—"} · <span style={{ color: "#c9a84c", fontFamily: "monospace" }}>{co?.account_number || "—"}</span></div>
       </div>
 
+      {/* Batch deal card — the actual Zoho deal this pipeline belongs to */}
+      {co?.corp_deal_name && (
+        <div style={{ background: "#111318", border: "1px solid #252b38", borderLeft: "3px solid #c9a84c", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", marginBottom: 4 }}>Batch Deal</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#e8e5de", fontFamily: "monospace" }}>{co.corp_deal_name}</div>
+            {co.corp_deal_created && (
+              <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 3 }}>Created {$d(co.corp_deal_created)}</div>
+            )}
+          </div>
+          {co.corp_deal_amount > 0 && (
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#c9a84c", fontFamily: "monospace" }}>{$k(co.corp_deal_amount)}</div>
+          )}
+        </div>
+      )}
+
+      {/* Chevron pipeline — stage from the actual deal */}
       <div style={{ background: "#111318", border: "1px solid #252b38", padding: "16px 18px" }}>
         <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-          <div style={{ fontSize: 12, color: "#7a7a82" }}>
-            Current stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
-          </div>
-          {co?.corp_deal_name && (
-            <div style={{ fontSize: 11, color: "#7a7a82", fontFamily: "monospace" }}>
-              Deal: <span style={{ color: "#e8e5de" }}>{co.corp_deal_name}</span>
-              {co.corp_deal_created && <span style={{ color: "#4a4a52" }}> · {$d(co.corp_deal_created)}</span>}
-            </div>
-          )}
+        <div style={{ marginTop: 10, fontSize: 12, color: "#7a7a82" }}>
+          Current stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
         </div>
       </div>
 
-      {/* Stage detail rows */}
+      {/* Stage list */}
       <div style={{ background: "#111318", border: "1px solid #252b38" }}>
         {CORP_STAGES.map((stage, i) => {
           const isActive = stage === accountStage;
@@ -255,24 +264,21 @@ export default function Dashboard() {
             <div key={stage} style={{ display: "flex", gap: 14, alignItems: "center", padding: "12px 18px",
               borderBottom: i < CORP_STAGES.length - 1 ? "1px solid #252b38" : "none",
               background: isActive ? "rgba(30,74,140,0.15)" : "transparent" }}>
-              {/* Status indicator */}
               <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
                 background: isActive ? "#c9a84c" : isDone ? "#5cb87a" : "#252b38",
-                border: isActive ? "none" : isDone ? "none" : "2px solid #3a3a52" }} />
-              <div style={{ fontSize: 13, fontWeight: isActive ? 600 : 400,
-                color: isActive ? "#e8e5de" : isDone ? "rgba(255,255,255,0.5)" : "#3a3a52" }}>
+                border: isActive || isDone ? "none" : "2px solid #3a3a52" }} />
+              <div style={{ flex: 1, fontSize: 13, fontWeight: isActive ? 600 : 400,
+                color: isActive ? "#e8e5de" : isDone ? "rgba(255,255,255,0.45)" : "#3a3a52" }}>
                 {STAGE_LABELS[stage] || stage}
               </div>
               {isActive && (
-                <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#c9a84c",
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#c9a84c",
                   background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.3)",
                   padding: "2px 8px", borderRadius: 3, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>
                   Current
                 </span>
               )}
-              {isDone && (
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "#5cb87a" }}>✓ Complete</span>
-              )}
+              {isDone && <span style={{ fontSize: 11, color: "#5cb87a" }}>✓</span>}
             </div>
           );
         })}
