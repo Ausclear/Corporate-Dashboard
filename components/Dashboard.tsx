@@ -60,20 +60,12 @@ function Tag({ t }: { t: ReturnType<typeof clr> }) {
 // ── SVG Chevron Pipeline ──────────────────────────────────────────────────────
 // Uses SVG polygons — works in every browser, no CSS pseudo-element issues
 function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStage: string }) {
-  const H = 44;
-  const TIP = 10;
+  const H = 34;
+  const TIP = 11;
   const W = 150;
   const OVERLAP = TIP;
   const totalW = stages.length * W - (stages.length - 1) * OVERLAP;
   const activeIdx = stages.indexOf(activeStage);
-
-  // Split label into two lines at the midpoint word
-  function splitLabel(s: string): [string, string] {
-    const words = s.split(" ");
-    if (words.length === 1) return [s, ""];
-    const mid = Math.ceil(words.length / 2);
-    return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
-  }
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -98,31 +90,22 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
 
           const fill = isActive ? "#1e4a8c" : isDone ? "#163d6e" : "#1a1f2e";
           const tCol = isActive ? "#fff" : isDone ? "rgba(255,255,255,0.6)" : "#3a3a52";
-          // Text centre — clear the notch on left and tip on right
-          const tLeft  = isFirst ? x + 4 : x + TIP + 3;
-          const tRight = isLast  ? x + W - 4 : x + W - TIP - 3;
+          const tLeft  = isFirst ? x + 6 : x + TIP + 5;
+          const tRight = isLast  ? x + W - 6 : x + W - TIP - 5;
           const tCx    = (tLeft + tRight) / 2;
-          const label = STAGE_LABELS[stage] || stage;
-          const [line1, line2] = splitLabel(label.toUpperCase());
+          const label  = (STAGE_LABELS[stage] || stage).toUpperCase();
 
           return (
             <g key={stage}>
               <polygon points={pts} fill={fill} />
-              {line2 ? (
-                <text textAnchor="middle" fill={tCol} fontSize={8}
-                  fontWeight={isActive ? 700 : 600}
-                  fontFamily="-apple-system,sans-serif">
-                  <tspan x={tCx} y={H / 2 - 5}>{line1}</tspan>
-                  <tspan x={tCx} dy={11}>{line2}</tspan>
-                </text>
-              ) : (
-                <text x={tCx} y={H / 2} dominantBaseline="middle"
-                  textAnchor="middle" fill={tCol} fontSize={8}
-                  fontWeight={isActive ? 700 : 600}
-                  fontFamily="-apple-system,sans-serif">
-                  {line1}
-                </text>
-              )}
+              <text
+                x={tCx} y={H / 2}
+                dominantBaseline="middle" textAnchor="middle"
+                fill={tCol} fontSize={8} fontWeight={isActive ? 700 : 600}
+                fontFamily="-apple-system,sans-serif"
+              >
+                {label}
+              </text>
             </g>
           );
         })}
