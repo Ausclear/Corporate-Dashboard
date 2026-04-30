@@ -131,6 +131,14 @@ export default function Dashboard() {
   const [error, setError]       = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const router = useRouter();
 
   useEffect(() => {
@@ -532,47 +540,61 @@ export default function Dashboard() {
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(17,19,24,0.96)",
         backdropFilter: "blur(12px)", borderBottom: "1px solid #252b38",
         padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        {/* Logo + company name */}
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" style={{ height: 22 }} />
           <div style={{ width: 1, height: 18, background: "#252b38" }} />
           <span style={{ fontSize: 12, color: "#7a7a82" }}>{co?.company_name || "Corporate Portal"}</span>
         </div>
-        <div style={{ position: "relative" }}>
-          <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #252b38",
-            padding: "6px 12px", color: "#7a7a82", cursor: "pointer", fontSize: 13 }}>☰</button>
-          {menuOpen && (
-            <>
-              <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
-              <div style={{ position: "absolute", right: 0, top: 36, background: "#111318",
-                border: "1px solid #252b38", zIndex: 50, minWidth: 160, boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
-                {TABS.map(t => (
-                  <button key={t.key} onClick={() => { setTab(t.key); setMenuOpen(false); }}
-                    style={{ display: "block", width: "100%", padding: "11px 18px", border: "none",
-                      borderBottom: "1px solid #252b38", background: tab === t.key ? "rgba(201,168,76,0.08)" : "transparent",
-                      color: tab === t.key ? "#c9a84c" : "#e8e5de", fontSize: 13, cursor: "pointer", textAlign: "left" as const }}>
-                    {t.label}
-                  </button>
-                ))}
-                <button onClick={() => router.push("/logout")} style={{ display: "block", width: "100%",
-                  padding: "11px 18px", border: "none", background: "transparent", color: "#7a7a82",
-                  fontSize: 12, cursor: "pointer", textAlign: "left" as const }}>Sign Out</button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
 
-      {/* Tab bar */}
-      <div style={{ borderBottom: "1px solid #252b38", padding: "0 20px", display: "flex", overflowX: "auto" }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            style={{ padding: "13px 18px", border: "none",
-              borderBottom: tab === t.key ? "2px solid #c9a84c" : "2px solid transparent",
-              background: "transparent", color: tab === t.key ? "#c9a84c" : "#7a7a82",
-              fontSize: 13, fontWeight: tab === t.key ? 600 : 400, cursor: "pointer", whiteSpace: "nowrap" as const }}>
-            {t.label}
-          </button>
-        ))}
+        {/* Desktop/tablet: tab nav inline in topbar */}
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "stretch", height: 52 }}>
+            {TABS.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                style={{ padding: "0 18px", border: "none",
+                  borderBottom: tab === t.key ? "2px solid #c9a84c" : "2px solid transparent",
+                  background: "transparent", color: tab === t.key ? "#c9a84c" : "#7a7a82",
+                  fontSize: 13, fontWeight: tab === t.key ? 600 : 400, cursor: "pointer",
+                  whiteSpace: "nowrap" as const, height: "100%" }}>
+                {t.label}
+              </button>
+            ))}
+            <button onClick={() => router.push("/logout")}
+              style={{ padding: "0 14px", border: "none", borderLeft: "1px solid #252b38",
+                background: "transparent", color: "#4a4a52", fontSize: 11, cursor: "pointer",
+                whiteSpace: "nowrap" as const, marginLeft: 8 }}>
+              Sign Out
+            </button>
+          </div>
+        )}
+
+        {/* Mobile: hamburger only */}
+        {isMobile && (
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #252b38",
+              padding: "6px 12px", color: "#7a7a82", cursor: "pointer", fontSize: 13 }}>☰</button>
+            {menuOpen && (
+              <>
+                <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
+                <div style={{ position: "absolute", right: 0, top: 36, background: "#111318",
+                  border: "1px solid #252b38", zIndex: 50, minWidth: 180, boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
+                  {TABS.map(t => (
+                    <button key={t.key} onClick={() => { setTab(t.key); setMenuOpen(false); }}
+                      style={{ display: "block", width: "100%", padding: "13px 18px", border: "none",
+                        borderBottom: "1px solid #252b38", background: tab === t.key ? "rgba(201,168,76,0.08)" : "transparent",
+                        color: tab === t.key ? "#c9a84c" : "#e8e5de", fontSize: 13, cursor: "pointer", textAlign: "left" as const }}>
+                      {t.label}
+                    </button>
+                  ))}
+                  <button onClick={() => router.push("/logout")} style={{ display: "block", width: "100%",
+                    padding: "12px 18px", border: "none", background: "transparent", color: "#7a7a82",
+                    fontSize: 12, cursor: "pointer", textAlign: "left" as const }}>Sign Out</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}
