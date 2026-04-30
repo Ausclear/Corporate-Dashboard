@@ -231,8 +231,16 @@ export default function Dashboard() {
 
       <div style={{ background: "#111318", border: "1px solid #252b38", padding: "16px 18px" }}>
         <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
-        <div style={{ marginTop: 12, fontSize: 12, color: "#7a7a82" }}>
-          Current stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ fontSize: 12, color: "#7a7a82" }}>
+            Current stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
+          </div>
+          {co?.corp_deal_name && (
+            <div style={{ fontSize: 11, color: "#7a7a82", fontFamily: "monospace" }}>
+              Deal: <span style={{ color: "#e8e5de" }}>{co.corp_deal_name}</span>
+              {co.corp_deal_created && <span style={{ color: "#4a4a52" }}> · {$d(co.corp_deal_created)}</span>}
+            </div>
+          )}
         </div>
       </div>
 
