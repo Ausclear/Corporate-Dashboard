@@ -1,22 +1,20 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-dm-sans",
-});
-
 export const metadata: Metadata = {
-  title: "AusClear — Corporate Portal",
-  description: "AusClear Corporate Client Dashboard",
+  title: "AusClear Corporate Dashboard",
+  description: "AusClear Corporate Client Portal",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} antialiased`} style={{ fontFamily: "var(--font-dm-sans), DM Sans, -apple-system, sans-serif" }}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+      </head>
+      <body style={{ margin: 0, padding: 0, background: "#07070a" }}>
         {children}
       </body>
     </html>
