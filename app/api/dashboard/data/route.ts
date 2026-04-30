@@ -17,9 +17,7 @@ export async function GET() {
       {
         cookies: {
           getAll() { return cookieStore.getAll(); },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
-          },
+          setAll(cs) { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); },
         },
       }
     );
@@ -27,7 +25,6 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
-    // Get corporate user record
     const { data: corpUser } = await admin
       .from("corporate_users")
       .select("zoho_account_id, company_name, display_name, role")
@@ -40,32 +37,17 @@ export async function GET() {
 
     const aid = corpUser.zoho_account_id;
 
-    // Fetch company, personnel, activity in parallel
     const [companyRes, personnelRes, activityRes] = await Promise.all([
-      admin.from("corporate_companies")
-        .select("*")
-        .eq("zoho_account_id", aid)
-        .single(),
-      admin.from("corporate_personnel")
-        .select("*")
-        .eq("zoho_account_id", aid)
-        .order("employee_name"),
-      admin.from("corporate_activity")
-        .select("*")
-        .eq("zoho_account_id", aid)
-        .order("event_date", { ascending: false })
-        .limit(20),
+      admin.from("corporate_companies").select("*").eq("zoho_account_id", aid).single(),
+      admin.from("corporate_personnel").select("*").eq("zoho_account_id", aid).order("employee_number"),
+      admin.from("corporate_activity").select("*").eq("zoho_account_id", aid).order("event_date", { ascending: false }).limit(20),
     ]);
 
     return NextResponse.json({
       company: companyRes.data,
       personnel: personnelRes.data || [],
       activity: activityRes.data || [],
-      user: {
-        email: user.email,
-        display_name: corpUser.display_name,
-        role: corpUser.role,
-      },
+      user: { email: user.email, display_name: corpUser.display_name, role: corpUser.role },
     });
   } catch (err) {
     console.error("Dashboard data error:", err);
