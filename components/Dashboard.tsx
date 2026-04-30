@@ -21,7 +21,16 @@ type P = {
   linked_deal_name?: string; revalidation_date?: string;
 };
 type A = { id: string; event: string; event_date: string };
-type Data = { company: Co; personnel: P[]; activity: A[]; user: { email: string } };
+type Batch = {
+  id: string; deal_name: string; stage: string; amount: number;
+  created_time: string; batch_date: string; nominee_count: number;
+  baseline_count: number; nv1_count: number; nv2_count: number;
+  upgrade_count: number; new_count: number;
+  agsva_fees: number; app_fees: number; sponsor_fees: number;
+  total_fees: number; ex_agsva: number;
+  nominees: P[];
+};
+type Data = { company: Co; personnel: P[]; activity: A[]; batches: Batch[]; user: { email: string } };
 
 // ── Zoho stage -> client-friendly label ───────────────────────────────────────
 const STAGE_LABELS: Record<string, string> = {
@@ -131,7 +140,8 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const co  = data?.company;
+  const co      = data?.company;
+  const batches  = data?.batches || [];
   const ppl = data?.personnel || [];
   const act = data?.activity  || [];
   const fees = co ? co.total_agsva_fees + co.total_application_fees + co.total_sponsorship_fees : 0;
@@ -228,72 +238,154 @@ export default function Dashboard() {
     </div>
   );
 
-  // ── PIPELINE ──────────────────────────────────────────────────────────────
-  const Pipeline = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div>
-        <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.2em", marginBottom: 4 }}>Corporate Onboarding</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>
-          {co?.company_name || "—"} · <span style={{ fontFamily: "monospace", color: "#c9a84c" }}>{co?.account_number || "—"}</span>
-        </div>
-      </div>
+  // ── NOMINATED EMPLOYEE BATCHES ──────────────────────────────────────────────
+  const Pipeline = () => {
+    const [openBatch, setOpenBatch] = useState<string | null>(batches[0]?.id || null);
+    const [openEmp, setOpenEmp]     = useState<string | null>(null);
 
-      {/* Chevron */}
-      <div style={{ background: "#111318", border: "1px solid #252b38", padding: "16px 18px" }}>
-        <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
-      </div>
-
-      {/* Batch deal card */}
-      {co?.corp_deal_name && (
-        <div style={{ background: "#111318", border: "1px solid #252b38", borderLeft: "3px solid #c9a84c" }}>
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid #252b38" }}>
-            <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", fontWeight: 700 }}>Current Batch Deal</div>
-          </div>
-          <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#e8e5de", marginBottom: 4 }}>{co.corp_deal_name}</div>
-              <div style={{ fontSize: 11, color: "#7a7a82" }}>
-                Stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[accountStage] || accountStage}</span>
-                {co.corp_deal_created && <span style={{ marginLeft: 12, color: "#4a4a52" }}>{$d(co.corp_deal_created)}</span>}
-              </div>
-            </div>
-            {(co.corp_deal_amount ?? 0) > 0 && (
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#c9a84c", fontFamily: "monospace" }}>{$k(co.corp_deal_amount)}</div>
-            )}
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.2em", marginBottom: 4 }}>Nominated Employee Batches</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>
+            {co?.company_name} · <span style={{ fontFamily: "monospace", color: "#c9a84c" }}>{co?.account_number}</span>
           </div>
         </div>
-      )}
 
-      {/* Stage checklist */}
-      <div style={{ background: "#111318", border: "1px solid #252b38" }}>
-        {CORP_STAGES.map((stage, i) => {
-          const isActive = stage === accountStage;
-          const isDone   = CORP_STAGES.indexOf(stage) < CORP_STAGES.indexOf(accountStage);
+        {/* Corporate pipeline */}
+        <div style={{ background: "#111318", border: "1px solid #252b38", padding: "14px 18px" }}>
+          <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", fontWeight: 700, marginBottom: 8 }}>Account Pipeline</div>
+          <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
+        </div>
+
+        {/* Batches */}
+        {batches.length === 0 && (
+          <div style={{ background: "#111318", border: "1px solid #252b38", padding: 40, textAlign: "center" as const, color: "#4a4a52" }}>
+            No batches found.
+          </div>
+        )}
+
+        {batches.map((batch, bi) => {
+          const isOpen = openBatch === batch.id;
           return (
-            <div key={stage} style={{ display: "flex", gap: 14, alignItems: "center", padding: "12px 18px",
-              borderBottom: i < CORP_STAGES.length - 1 ? "1px solid #252b38" : "none",
-              background: isActive ? "rgba(30,74,140,0.15)" : "transparent" }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                background: isActive ? "#c9a84c" : isDone ? "#5cb87a" : "#252b38",
-                border: isActive || isDone ? "none" : "2px solid #3a3a52" }} />
-              <div style={{ flex: 1, fontSize: 13, fontWeight: isActive ? 600 : 400,
-                color: isActive ? "#e8e5de" : isDone ? "rgba(255,255,255,0.5)" : "#3a3a52" }}>
-                {STAGE_LABELS[stage] || stage}
+            <div key={batch.id} style={{ background: "#111318", border: "1px solid #252b38", borderTop: "2px solid #c9a84c" }}>
+
+              {/* Batch header */}
+              <div
+                onClick={() => setOpenBatch(isOpen ? null : batch.id)}
+                style={{ padding: "14px 18px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" as const }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "#161922"}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}
+              >
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#e8e5de", marginBottom: 4 }}>{batch.deal_name}</div>
+                  <div style={{ fontSize: 11, color: "#7a7a82", display: "flex", gap: 12, flexWrap: "wrap" as const }}>
+                    <span>Stage: <span style={{ color: "#c9a84c", fontWeight: 600 }}>{STAGE_LABELS[batch.stage] || batch.stage}</span></span>
+                    <span>Batch date: <span style={{ color: "#e8e5de" }}>{$d(batch.batch_date)}</span></span>
+                    <span>Created: <span style={{ color: "#e8e5de" }}>{$d(batch.created_time)}</span></span>
+                    <span>{batch.nominee_count} employee{batch.nominee_count !== 1 ? "s" : ""}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#c9a84c", fontFamily: "monospace" }}>{$k(batch.amount)}</div>
+                  <span style={{ color: "#4a4a52", fontSize: 16, transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-block" }}>›</span>
+                </div>
               </div>
-              {isActive && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#c9a84c",
-                  background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.3)",
-                  padding: "2px 8px", borderRadius: 3, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>
-                  Current
-                </span>
+
+              {isOpen && (
+                <div style={{ borderTop: "1px solid #252b38" }}>
+
+                  {/* Batch financials */}
+                  <div style={{ padding: "14px 18px", borderBottom: "1px solid #252b38", background: "#0d1018" }}>
+                    <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", fontWeight: 700, marginBottom: 12 }}>Batch Financials</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 1, background: "#252b38", marginBottom: 12 }}>
+                      {[
+                        { label: "Application Fees",    value: $k(batch.app_fees),     note: `${batch.nominee_count} × $400` },
+                        { label: "Sponsorship Fees",    value: $k(batch.sponsor_fees), note: "$1,460 per employee" },
+                        { label: "AGSVA Fees",          value: $k(batch.agsva_fees),   note: "Government at cost" },
+                        { label: "AusClear Total",      value: $k(batch.ex_agsva),     note: "Ex-AGSVA" },
+                      ].map((row, i) => (
+                        <div key={i} style={{ background: "#111318", padding: "12px 14px" }}>
+                          <div style={{ fontSize: 9, color: "#7a7a82", textTransform: "uppercase" as const, letterSpacing: "0.12em", marginBottom: 4 }}>{row.label}</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: "#c9a84c", marginBottom: 2 }}>{row.value}</div>
+                          <div style={{ fontSize: 10, color: "#4a4a52" }}>{row.note}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Clearance breakdown */}
+                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" as const }}>
+                      {batch.baseline_count > 0 && <span style={{ fontSize: 11, color: "#7a7a82" }}>Baseline: <strong style={{ color: "#e8e5de" }}>{batch.baseline_count}</strong></span>}
+                      {batch.nv1_count     > 0 && <span style={{ fontSize: 11, color: "#7a7a82" }}>NV1: <strong style={{ color: "#6b9fd4" }}>{batch.nv1_count}</strong></span>}
+                      {batch.nv2_count     > 0 && <span style={{ fontSize: 11, color: "#7a7a82" }}>NV2: <strong style={{ color: "#c9a84c" }}>{batch.nv2_count}</strong></span>}
+                      {batch.new_count     > 0 && <span style={{ fontSize: 11, color: "#7a7a82" }}>New: <strong style={{ color: "#5cb87a" }}>{batch.new_count}</strong></span>}
+                      {batch.upgrade_count > 0 && <span style={{ fontSize: 11, color: "#7a7a82" }}>Upgrades: <strong style={{ color: "#d4935c" }}>{batch.upgrade_count}</strong></span>}
+                    </div>
+                  </div>
+
+                  {/* Employee list */}
+                  <div style={{ padding: "10px 18px 4px", borderBottom: "1px solid #252b38" }}>
+                    <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", fontWeight: 700 }}>Employees in This Batch</div>
+                  </div>
+                  {batch.nominees.map((p, pi) => {
+                    const empOpen = openEmp === p.id;
+                    const t = clr(p.clearance_type);
+                    return (
+                      <div key={p.id} style={{ borderBottom: pi < batch.nominees.length - 1 ? "1px solid #1a1f2c" : "none" }}>
+                        {/* Employee row */}
+                        <div
+                          onClick={() => setOpenEmp(empOpen ? null : p.id)}
+                          style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 18px", cursor: "pointer" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "#161922"}
+                          onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}
+                        >
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c", flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#e8e5de" }}>{p.employee_name}</div>
+                            <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{p.stage || "—"}</div>
+                          </div>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                            <Tag t={t} />
+                            {p.clearance_request_type && (
+                              <span style={{ fontSize: 10, fontWeight: 600, color: "#7a7a82", background: "rgba(122,122,130,0.12)", border: "1px solid rgba(122,122,130,0.3)", padding: "2px 7px", borderRadius: 3 }}>
+                                {p.clearance_request_type}
+                              </span>
+                            )}
+                            <span style={{ color: "#4a4a52", fontSize: 14, display: "inline-block", transform: empOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>›</span>
+                          </div>
+                        </div>
+                        {/* Employee detail */}
+                        {empOpen && (
+                          <div style={{ background: "#0d1018", borderTop: "1px solid #252b38", padding: "14px 18px 16px 36px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 28px" }}>
+                              {[
+                                { label: "Email",           value: p.email || "—" },
+                                { label: "Mobile",          value: p.mobile || "—" },
+                                { label: "Clearance Level", value: p.clearance_type || "—" },
+                                { label: "Request Type",    value: p.clearance_request_type || "New" },
+                                { label: "Stage",           value: p.stage || "—" },
+                                { label: "Onboarding",      value: p.onboarding_status || "—" },
+                                { label: "Batch Date",      value: $d(p.batch_date) },
+                                { label: "Linked Deal",     value: p.linked_deal_name || "—" },
+                              ].map((row, ri) => (
+                                <div key={ri}>
+                                  <div style={{ fontSize: 9, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.12em", fontWeight: 700, marginBottom: 2 }}>{row.label}</div>
+                                  <div style={{ fontSize: 12, color: row.value === "—" ? "#4a4a52" : "#e8e5de" }}>{row.value}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
-              {isDone && <span style={{ fontSize: 11, color: "#5cb87a" }}>✓</span>}
             </div>
           );
         })}
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── PERSONNEL ─────────────────────────────────────────────────────────────
   const Personnel = () => (
@@ -427,7 +519,7 @@ export default function Dashboard() {
   // ── SHELL ─────────────────────────────────────────────────────────────────
   const TABS = [
     { key: "overview"   as const, label: "Overview"   },
-    { key: "pipeline"   as const, label: "Pipeline"   },
+    { key: "pipeline"   as const, label: "Batches"    },
     { key: "personnel"  as const, label: "Personnel"  },
     { key: "financials" as const, label: "Financials" },
   ];
