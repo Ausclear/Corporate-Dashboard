@@ -62,7 +62,7 @@ function Tag({ t }: { t: ReturnType<typeof clr> }) {
 function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStage: string }) {
   const H = 44;
   const TIP = 10;
-  const W = 100;
+  const W = 150;
   const OVERLAP = TIP;
   const totalW = stages.length * W - (stages.length - 1) * OVERLAP;
   const activeIdx = stages.indexOf(activeStage);
