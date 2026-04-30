@@ -21,7 +21,7 @@ type A = { id: string; event: string; event_date: string };
 type Data = { company: Co; personnel: P[]; activity: A[]; user: { email: string } };
 
 // ── Corporate pipeline stages ─────────────────────────────────────────────────
-// Zoho stage -> client-friendly label
+// Zoho stage -> client-friendly label (v2)
 const STAGE_LABELS: Record<string, string> = {
   "Onboard Corporate Account": "Account Setup",
   "Prepare Contract":          "Preparing Agreement",
