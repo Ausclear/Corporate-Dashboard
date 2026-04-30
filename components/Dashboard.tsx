@@ -137,7 +137,7 @@ export default function Dashboard() {
   const fees = co ? co.total_agsva_fees + co.total_application_fees + co.total_sponsorship_fees : 0;
 
   // Current account stage — from Zoho we know NETFLIX is "Onboard Corporate Account"
-  const accountStage = STAGE_MAP[co?.corp_deal_stage || "Onboard Corporate Account"] || "Onboarding";
+  const accountStage = co?.corp_deal_stage || "Onboard Corporate Account";
 
   // ── OVERVIEW ──────────────────────────────────────────────────────────────
   const Overview = () => (
