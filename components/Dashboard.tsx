@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type Co = {
-  company_name: string; abn: string; client_ref: string;
+  company_name: string; abn: string; account_number: string; client_ref?: string;
   email: string; phone: string;
   total_nominees: number; new_total: number; upgrade_total: number; transfer_total: number;
   baseline_total: number; nv1_total: number; nv2_total: number;
   total_agsva_fees: number; total_application_fees: number;
-  total_sponsorship_fees: number; total_fees_minus_agsva: number;
+  total_sponsorship_fees: number; total_fees_minus_agsva: number; corp_deal_stage?: string; corp_deal_amount?: number;
 };
 type P = {
   id: string; employee_name: string; email: string; mobile: string;
@@ -137,7 +137,7 @@ export default function Dashboard() {
   const fees = co ? co.total_agsva_fees + co.total_application_fees + co.total_sponsorship_fees : 0;
 
   // Current account stage — from Zoho we know NETFLIX is "Onboard Corporate Account"
-  const accountStage = STAGE_MAP["Onboard Corporate Account"] || "Onboarding";
+  const accountStage = STAGE_MAP[co?.corp_deal_stage || "Onboard Corporate Account"] || "Onboarding";
 
   // ── OVERVIEW ──────────────────────────────────────────────────────────────
   const Overview = () => (
@@ -149,7 +149,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 22, fontWeight: 700, color: "#e8e5de", marginBottom: 4 }}>{co?.company_name || "—"}</div>
             <div style={{ fontSize: 12, color: "#7a7a82" }}>
               {co?.abn && <span>ABN {co.abn} &nbsp;·&nbsp; </span>}
-              Account: <span style={{ color: "#c9a84c", fontFamily: "monospace", fontWeight: 700 }}>{co?.client_ref || "NE88966"}</span>
+              Account: <span style={{ color: "#c9a84c", fontFamily: "monospace", fontWeight: 700 }}>{co?.account_number || co?.client_ref || "—"}</span>
             </div>
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb87a", background: "rgba(92,184,122,0.12)", border: "1px solid rgba(92,184,122,0.35)", padding: "4px 12px", borderRadius: 4 }}>Active</span>
