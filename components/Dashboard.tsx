@@ -149,7 +149,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 22, fontWeight: 700, color: "#e8e5de", marginBottom: 4 }}>{co?.company_name || "—"}</div>
             <div style={{ fontSize: 12, color: "#7a7a82" }}>
               {co?.abn && <span>ABN {co.abn} &nbsp;·&nbsp; </span>}
-              Account: <span style={{ color: "#c9a84c", fontFamily: "monospace", fontWeight: 700 }}>{co?.account_number || co?.client_ref || "—"}</span>
+              Account: <span style={{ color: "#c9a84c", fontFamily: "monospace", fontWeight: 700 }}>{co?.account_number || "—"}</span>
             </div>
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb87a", background: "rgba(92,184,122,0.12)", border: "1px solid rgba(92,184,122,0.35)", padding: "4px 12px", borderRadius: 4 }}>Active</span>
