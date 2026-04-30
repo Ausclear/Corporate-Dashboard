@@ -126,8 +126,7 @@ export default function Dashboard() {
             <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>{co?.company_name || "—"}</h1>
             <div style={{ fontSize: 12, color: C.muted }}>
               {co?.abn && <span>ABN {co.abn} &nbsp;·&nbsp; </span>}
-              Ref: <span style={{ color: C.gold, fontFamily: "monospace" }}>{co?.client_ref || "—"}</span>
-              {co?.email && <span> &nbsp;·&nbsp; {co.email}</span>}
+              Account: <span style={{ color: C.gold, fontFamily: "monospace", fontWeight: 700 }}>{co?.client_ref || "—"}</span>
             </div>
           </div>
           <Pill label="Active Corporate Client" col={C.green} bg={C.greenD} border={C.greenB} />
