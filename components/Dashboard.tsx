@@ -35,7 +35,7 @@ const clrTag = (c: string) => c?.includes("NV2") ? { col: GOLD, bg: "rgba(201,16
   { col: MUTED, bg: "rgba(138,138,143,0.12)", label: "BSL" };
 
 type CorpDeal = { id: string; deal_name: string; stage: string; account_name: string; amount: number; created_time: string; };
-type Personnel = { id: string; employee_name: string; clearance_type: string; clearance_request_type: string; stage: string; status: string; batch_date: string | null; email: string; };
+type Personnel = { id: string; employee_name: string; clearance_type: string; clearance_request_type: string; stage: string; status: string; batch_date: string | null; email: string; onboarding_status?: string | null; };
 type Co = { company_name: string; abn: string; client_ref: string; total_nominees: number; baseline_total: number; nv1_total: number; nv2_total: number; total_agsva_fees: number; total_application_fees: number; total_sponsorship_fees: number; total_fees_minus_agsva: number; email: string; phone: string; };
 type Data = { company: Co; personnel: Personnel[]; activity: any[]; user: { email: string; display_name: string; }; corp_deals?: CorpDeal[]; };
 
