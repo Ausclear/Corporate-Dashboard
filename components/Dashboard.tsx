@@ -187,6 +187,85 @@ export default function Dashboard() {
     );
   };
 
+
+  // ── SVG CHEVRON PIPELINE ─────────────────────────────────────────────────
+  // Each chevron is an SVG polygon — works everywhere, no pseudo-element issues
+  const ChevronPipeline = ({ stages, activeStage, colour = "#1e4a8c", doneColour = "#163d6e" }: {
+    stages: string[];
+    activeStage: string;
+    colour?: string;
+    doneColour?: string;
+  }) => {
+    const H = 34;       // height of each chevron
+    const TIP = 12;     // how far the arrow tip sticks out
+    const W = 140;      // width per chevron
+    const OVERLAP = TIP; // chevrons overlap by this amount
+
+    const activeIdx = stages.indexOf(activeStage);
+
+    return (
+      <div style={{ overflowX: "auto" }}>
+        <svg
+          height={H}
+          width={stages.length * W - (stages.length - 1) * OVERLAP}
+          style={{ display: "block" }}
+        >
+          {stages.map((stage, i) => {
+            const x = i * (W - OVERLAP);
+            const isActive = i === activeIdx;
+            const isDone   = i < activeIdx;
+            const isLast   = i === stages.length - 1;
+
+            // Polygon points: flat left (except first has notch), arrow right (except last)
+            let pts: string;
+            if (i === 0 && isLast) {
+              // only one stage — rectangle
+              pts = `${x},0 ${x+W},0 ${x+W},${H} ${x},${H}`;
+            } else if (i === 0) {
+              // first: flat left, arrow right
+              pts = `${x},0 ${x+W-TIP},0 ${x+W},${H/2} ${x+W-TIP},${H} ${x},${H}`;
+            } else if (isLast) {
+              // last: notch left, flat right
+              pts = `${x},0 ${x+W},0 ${x+W},${H} ${x},${H} ${x+TIP},${H/2}`;
+            } else {
+              // middle: notch left, arrow right
+              pts = `${x},0 ${x+W-TIP},0 ${x+W},${H/2} ${x+W-TIP},${H} ${x},${H} ${x+TIP},${H/2}`;
+            }
+
+            const fill = isActive ? colour : isDone ? doneColour : "#1a1f2e";
+            const textCol = (isActive || isDone) ? "#fff" : "#3a3a52";
+            const textOpacity = isDone ? 0.6 : 1;
+
+            // Text x-center: avoid the notch on left and tip on right
+            const textLeft  = i === 0 ? x + 8 : x + TIP + 4;
+            const textRight = isLast ? x + W - 8 : x + W - TIP - 4;
+            const textCx    = (textLeft + textRight) / 2;
+
+            return (
+              <g key={stage}>
+                <polygon points={pts} fill={fill} />
+                <text
+                  x={textCx}
+                  y={H / 2}
+                  dominantBaseline="middle"
+                  textAnchor="middle"
+                  fill={textCol}
+                  fillOpacity={textOpacity}
+                  fontSize={9}
+                  fontWeight={isActive ? 700 : 600}
+                  fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+                  style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+                >
+                  {stage.toUpperCase()}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    );
+  };
+
   // ── OVERVIEW ─────────────────────────────────────────────────────────────
   const Overview = () => (
     <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
