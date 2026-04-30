@@ -149,7 +149,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 22, fontWeight: 700, color: "#e8e5de", marginBottom: 4 }}>{co?.company_name || "—"}</div>
             <div style={{ fontSize: 12, color: "#7a7a82" }}>
               {co?.abn && <span>ABN {co.abn} &nbsp;·&nbsp; </span>}
-              Account: <span style={{ color: "#c9a84c", fontFamily: "monospace", fontWeight: 700 }}>{co?.client_ref || "—"}</span>
+              Account: <span style={{ color: "#c9a84c", fontFamily: "monospace", fontWeight: 700 }}>{co?.client_ref || "NE88966"}</span>
             </div>
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb87a", background: "rgba(92,184,122,0.12)", border: "1px solid rgba(92,184,122,0.35)", padding: "4px 12px", borderRadius: 4 }}>Active</span>
@@ -226,7 +226,7 @@ export default function Dashboard() {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div>
         <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.2em", marginBottom: 4 }}>Corporate Onboarding</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>{co?.company_name || "—"} · {co?.client_ref || "—"}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#e8e5de" }}>{co?.company_name || "—"} · {co?.client_ref || "NE88966"}</div>
       </div>
 
       <div style={{ background: "#111318", border: "1px solid #252b38", padding: "16px 18px" }}>
@@ -420,7 +420,7 @@ export default function Dashboard() {
         backdropFilter: "blur(12px)", borderBottom: "1px solid #252b38",
         padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img src="https://ausclear.au/AusClear-Light-Transparent.png" alt="AusClear" style={{ height: 22 }} />
+          <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" style={{ height: 22 }} />
           <div style={{ width: 1, height: 18, background: "#252b38" }} />
           <span style={{ fontSize: 12, color: "#7a7a82" }}>{co?.company_name || "Corporate Portal"}</span>
         </div>
