@@ -21,7 +21,7 @@ type A = { id: string; event: string; event_date: string };
 type Data = { company: Co; personnel: P[]; activity: A[]; user: { email: string } };
 
 // ── Corporate pipeline stages ─────────────────────────────────────────────────
-// Zoho stage -> client-friendly label (v2)
+// Client-friendly labels for Zoho stage names
 const STAGE_LABELS: Record<string, string> = {
   "Onboard Corporate Account": "Account Setup",
   "Prepare Contract":          "Preparing Agreement",
@@ -34,7 +34,8 @@ const STAGE_LABELS: Record<string, string> = {
   "Invoice Paid":              "Payment Received",
   "Corporate Approved":        "Active & Approved",
 };
-const CORP_STAGES = Object.keys(STAGE_LABELS);
+// Stages come from Zoho API — not hardcoded
+// CORP_STAGES is set dynamically from co.pipeline_stages after data loads
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const $k = (n?: number | null) => n != null ? `$${Number(n).toLocaleString("en-AU")}` : "—";
@@ -137,7 +138,8 @@ export default function Dashboard() {
   const fees = co ? co.total_agsva_fees + co.total_application_fees + co.total_sponsorship_fees : 0;
 
   // Current account stage — from Zoho we know NETFLIX is "Onboard Corporate Account"
-  const accountStage = co?.corp_deal_stage || "Onboard Corporate Account";
+  const accountStage   = co?.corp_deal_stage || "Onboard Corporate Account";
+  const CORP_STAGES    = co?.pipeline_stages || Object.keys(STAGE_LABELS);
 
   // ── OVERVIEW ──────────────────────────────────────────────────────────────
   const Overview = () => (
