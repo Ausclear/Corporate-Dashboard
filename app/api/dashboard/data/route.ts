@@ -7,7 +7,7 @@ const TEST_ACCOUNT_ID    = "80905000030762144";
 
 async function getZohoToken(): Promise<string> {
   const res = await fetch(
-    `https://accounts.zoho.com.au/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`,
+    `https://accounts.zoho.com/oauth/v2/token?refresh_token=${ZOHO_REFRESH_TOKEN}&client_id=${ZOHO_CLIENT_ID}&client_secret=${ZOHO_CLIENT_SECRET}&grant_type=refresh_token`,
     { method: "POST" }
   );
   const data = await res.json();
@@ -23,7 +23,7 @@ async function zohoGet(token: string, url: string) {
 export async function GET() {
   try {
     const token = await getZohoToken();
-    const base  = "https://www.zohoapis.com.au/crm/v6";
+    const base  = "https://www.zohoapis.com/crm/v6";
 
     // Fetch account directly from Zoho
     const accountRes = await zohoGet(token, `${base}/Accounts/${TEST_ACCOUNT_ID}`);
