@@ -61,6 +61,9 @@ export async function GET() {
       total_fees_minus_agsva: Number(account.Total_Fees_Minus_AGSVA) || 0,
       total_fees:             Number(account.Total_Fees)              || 0,
       corp_deal_stage:        corpDeal?.Stage || "Onboard Corporate Account",
+      corp_deal_name:         corpDeal?.Deal_Name || null,
+      corp_deal_amount:       corpDeal?.Amount || 0,
+      corp_deal_created:      corpDeal?.Created_Time || null,
     };
 
     const personnel = nominees.map((ne: any) => ({
