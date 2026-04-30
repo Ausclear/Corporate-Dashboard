@@ -71,12 +71,20 @@ function Tag({ t }: { t: ReturnType<typeof clr> }) {
 // ── SVG Chevron Pipeline ──────────────────────────────────────────────────────
 // Uses SVG polygons — works in every browser, no CSS pseudo-element issues
 function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStage: string }) {
-  const H = 32;
+  const H = 44;       // taller to fit 2 lines of text
   const TIP = 11;
-  const W = 130;
+  const W = 100;
   const OVERLAP = TIP;
   const totalW = stages.length * W - (stages.length - 1) * OVERLAP;
   const activeIdx = stages.indexOf(activeStage);
+
+  // Split label into up to 2 lines at natural word breaks
+  function splitLabel(s: string): [string, string] {
+    const words = s.split(" ");
+    if (words.length <= 1) return [s, ""];
+    const mid = Math.ceil(words.length / 2);
+    return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+  }
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -99,23 +107,36 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
             pts = `${x},0 ${x+W-TIP},0 ${x+W},${H/2} ${x+W-TIP},${H} ${x},${H} ${x+TIP},${H/2}`;
           }
 
-          const fill  = isActive ? "#1e4a8c" : isDone ? "#163d6e" : "#1a1f2e";
-          const tCol  = (isActive || isDone) ? (isDone ? "rgba(255,255,255,0.55)" : "#fff") : "#3a3a52";
-          const tLeft = isFirst ? x + 8 : x + TIP + 6;
-          const tRight= isLast  ? x + W - 8 : x + W - TIP - 6;
-          const tCx   = (tLeft + tRight) / 2;
+          const fill = isActive ? "#1e4a8c" : isDone ? "#163d6e" : "#1a1f2e";
+          const tCol = isActive ? "#fff" : isDone ? "rgba(255,255,255,0.55)" : "#3a3a52";
+          const tLeft  = isFirst ? x + 6 : x + TIP + 4;
+          const tRight = isLast  ? x + W - 6 : x + W - TIP - 4;
+          const tCx    = (tLeft + tRight) / 2;
+          const [line1, line2] = splitLabel(stage.toUpperCase());
 
           return (
             <g key={stage}>
               <polygon points={pts} fill={fill} />
-              <text
-                x={tCx} y={H / 2}
-                dominantBaseline="middle" textAnchor="middle"
-                fill={tCol} fontSize={9} fontWeight={isActive ? 700 : 600}
-                fontFamily="-apple-system,sans-serif"
-              >
-                {stage.toUpperCase()}
-              </text>
+              {line2 ? (
+                <>
+                  <text x={tCx} y={H/2 - 6} dominantBaseline="middle" textAnchor="middle"
+                    fill={tCol} fontSize={8} fontWeight={isActive ? 700 : 600}
+                    fontFamily="-apple-system,sans-serif">
+                    {line1}
+                  </text>
+                  <text x={tCx} y={H/2 + 6} dominantBaseline="middle" textAnchor="middle"
+                    fill={tCol} fontSize={8} fontWeight={isActive ? 700 : 600}
+                    fontFamily="-apple-system,sans-serif">
+                    {line2}
+                  </text>
+                </>
+              ) : (
+                <text x={tCx} y={H/2} dominantBaseline="middle" textAnchor="middle"
+                  fill={tCol} fontSize={8} fontWeight={isActive ? 700 : 600}
+                  fontFamily="-apple-system,sans-serif">
+                  {line1}
+                </text>
+              )}
             </g>
           );
         })}
