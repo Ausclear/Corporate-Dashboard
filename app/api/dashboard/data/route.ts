@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-const ZOHO_CLIENT_ID     = process.env.ZOHO_CLIENT_ID!;
-const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET!;
-const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN!;
+const ZOHO_CLIENT_ID     = process.env.ZOHO_CLIENT_ID || "1000.57XM0OOBWZHPCV60VN2ZEC9AV4P80N";
+const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET || "c600ba642721a316b6689da2b3c96230ad6463d7ca";
+const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN || "1000.cc0c290f4c0aebf03439116960721d2f.ba8c1468f101c30a59fc6be744df8dab";
 const TEST_ACCOUNT_ID    = "80905000030762144";
 
 async function getZohoToken(): Promise<string> {
