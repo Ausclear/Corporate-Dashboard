@@ -262,7 +262,7 @@ export default function Dashboard() {
 
         {/* Corporate pipeline */}
         <div style={{ background: "#111318", border: "1px solid #252b38", padding: "14px 18px" }}>
-          <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", fontWeight: 700, marginBottom: 8 }}>Account Pipeline</div>
+          <div style={{ fontSize: 10, color: "#c9a84c", textTransform: "uppercase" as const, letterSpacing: "0.15em", fontWeight: 700, marginBottom: 8 }}>Current Batch Stage</div>
           <ChevronPipeline stages={CORP_STAGES} activeStage={accountStage} />
         </div>
 
