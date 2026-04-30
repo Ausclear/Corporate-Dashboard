@@ -191,7 +191,7 @@ export default function Dashboard() {
       {/* Pipeline preview */}
       <div style={{ background: "#111318", border: "1px solid #252b38" }}>
         <div style={{ padding: "12px 18px", borderBottom: "1px solid #252b38", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#e8e5de" }}>Corporate Pipeline</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#e8e5de" }}>Current Batch Stage</span>
           <button onClick={() => setTab("pipeline")} style={{ fontSize: 11, color: "#c9a84c", background: "none", border: "none", cursor: "pointer", padding: 0 }}>View →</button>
         </div>
         <div style={{ padding: "12px 18px 14px" }}>
@@ -542,7 +542,7 @@ export default function Dashboard() {
         padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {/* Logo + company name */}
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" style={{ height: 22 }} />
+          <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" style={{ height: 32 }} />
           <div style={{ width: 1, height: 18, background: "#252b38" }} />
           <span style={{ fontSize: 12, color: "#7a7a82" }}>{co?.company_name || "Corporate Portal"}</span>
         </div>
