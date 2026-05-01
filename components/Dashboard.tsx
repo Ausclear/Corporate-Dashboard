@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -78,9 +78,39 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
   const OVERLAP = TIP;
   const totalW = stages.length * W - (stages.length - 1) * OVERLAP;
   const activeIdx = stages.indexOf(activeStage);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const drag = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    drag.current = { active: true, startX: e.pageX - ref.current.offsetLeft, scrollLeft: ref.current.scrollLeft };
+    ref.current.style.cursor = "grabbing";
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!drag.current.active || !ref.current) return;
+    e.preventDefault();
+    const x = e.pageX - ref.current.offsetLeft;
+    ref.current.scrollLeft = drag.current.scrollLeft - (x - drag.current.startX);
+  };
+  const onMouseUp = () => {
+    drag.current.active = false;
+    if (ref.current) ref.current.style.cursor = "grab";
+  };
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div
+      ref={ref}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      style={{
+        overflowX: "auto", cursor: "grab", userSelect: "none",
+        // hide scrollbar
+        scrollbarWidth: "none", msOverflowStyle: "none",
+      }}
+    >
+      <style>{`.no-scroll::-webkit-scrollbar { display: none; }`}</style>
       <svg height={H} width={totalW} style={{ display: "block", minWidth: totalW }}>
         {stages.map((stage, i) => {
           const x = i * (W - OVERLAP);
@@ -112,7 +142,7 @@ function ChevronPipeline({ stages, activeStage }: { stages: string[]; activeStag
               <polygon points={pts} fill={fill} />
               <text x={tCx} y={H/2} dominantBaseline="middle" textAnchor="middle"
                 fill={tCol} fontSize={8} fontWeight={isActive ? 700 : 600}
-                fontFamily="-apple-system,sans-serif">
+                fontFamily="-apple-system,sans-serif" style={{ pointerEvents: "none" }}>
                 {label}
               </text>
             </g>
