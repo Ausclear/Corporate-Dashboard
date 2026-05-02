@@ -646,9 +646,9 @@ export default function Dashboard() {
       </main>
     </div>
   );
-}// Client-friendly labels — corporate account pipeline + corporate employee pipeline only
+}// Client-friendly labels — corporate account + employee pipelines
 const STAGE_LABELS: Record<string, string> = {
-  // ── Corporate account pipeline ───────────────────────────────────────────
+  // Corporate account pipeline
   "Onboard Corporate Account": "Account Setup",
   "Prepare Contract":          "Preparing Agreement",
   "Send Contract":             "Agreement Sent",
@@ -662,7 +662,7 @@ const STAGE_LABELS: Record<string, string> = {
   "Invoice Paid":              "Payment Received",
   "Corporate Approved":        "Active & Approved",
   "Corporate Declined":        "Declined",
-  // ── Corporate employee pipeline ──────────────────────────────────────────
+  // Corporate employee pipeline
   "Sponsorship Created":       "Sponsorship Created",
   "Onboard Employee for ESC":  "Commencing Employment Screening",
   "ESC Pending":               "Screening Underway",
@@ -678,6 +678,7 @@ const STAGE_LABELS: Record<string, string> = {
   "Closed Lost":               "Closed",
   "Closed Won":                "Completed",
 };
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
