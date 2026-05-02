@@ -646,22 +646,7 @@ export default function Dashboard() {
 
         {/* Main content */}
         <div style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
-          {/* Mobile tab bar */}
-          {isMobile && (
-            <div style={{ borderBottom: "1px solid #252b38", display: "flex", overflowX: "auto",
-              background: "#0d1018", flexShrink: 0 }}>
-              {TABS.map(t => (
-                <button key={t.key} onClick={() => setTab(t.key)}
-                  style={{ padding: "12px 16px", border: "none",
-                    borderBottom: tab === t.key ? "2px solid #c9a84c" : "2px solid transparent",
-                    background: "transparent", color: tab === t.key ? "#c9a84c" : "#7a7a82",
-                    fontSize: 13, fontWeight: tab === t.key ? 600 : 400,
-                    cursor: "pointer", whiteSpace: "nowrap" as const }}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          )}
+
           <main style={{ padding: isMobile ? "16px 16px 60px" : "24px 28px 60px", maxWidth: isMobile ? "100%" : 1100 }}>
             {tab === "overview"   && <Overview />}
             {tab === "pipeline"   && <Pipeline />}
