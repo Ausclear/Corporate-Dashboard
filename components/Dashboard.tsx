@@ -536,54 +536,50 @@ export default function Dashboard() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#07070a", color: "#e8e5de", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#07070a", color: "#e8e5de", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", display: "flex", flexDirection: "column" }}>
 
-      {/* Topbar */}
+      {/* Top bar — full width */}
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(17,19,24,0.96)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid #252b38", padding: "0 20px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        borderBottom: "1px solid #252b38", padding: "0 20px", height: 56,
+        display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" style={{ height: 32 }} />
-          <div style={{ width: 1, height: 18, background: "#252b38" }} />
-          <span style={{ fontSize: 12, color: "#7a7a82" }}>{co?.company_name || "Corporate Portal"}</span>
+          {!isMobile && <div style={{ width: 1, height: 20, background: "#252b38" }} />}
+          {!isMobile && <span style={{ fontSize: 13, color: "#7a7a82", fontWeight: 500 }}>{co?.company_name || "Corporate Portal"}</span>}
+          {!isMobile && co?.account_number && (
+            <span style={{ fontSize: 11, color: "#4a4a52", fontFamily: "monospace" }}>· {co.account_number}</span>
+          )}
         </div>
-
-        {/* Desktop: tabs in topbar */}
+        {/* Desktop: sign out only — nav is in sidebar */}
         {!isMobile && (
-          <div style={{ display: "flex", alignItems: "stretch", height: 52 }}>
-            {TABS.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                style={{ padding: "0 18px", border: "none",
-                  borderBottom: tab === t.key ? "2px solid #c9a84c" : "2px solid transparent",
-                  background: "transparent", color: tab === t.key ? "#c9a84c" : "#7a7a82",
-                  fontSize: 13, fontWeight: tab === t.key ? 600 : 400, cursor: "pointer", whiteSpace: "nowrap" as const, height: "100%" }}>
-                {t.label}
-              </button>
-            ))}
-            <button onClick={() => router.push("/logout")}
-              style={{ padding: "0 14px", border: "none", borderLeft: "1px solid #252b38",
-                background: "transparent", color: "#4a4a52", fontSize: 11, cursor: "pointer", marginLeft: 8 }}>
-              Sign Out
-            </button>
-          </div>
+          <button onClick={() => router.push("/logout")}
+            style={{ padding: "6px 16px", border: "1px solid #252b38", background: "transparent",
+              color: "#4a4a52", fontSize: 11, cursor: "pointer", borderRadius: 4 }}>
+            Sign Out
+          </button>
         )}
-
         {/* Mobile: hamburger */}
         {isMobile && (
           <div style={{ position: "relative" }}>
-            <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #252b38", padding: "6px 12px", color: "#7a7a82", cursor: "pointer", fontSize: 13 }}>☰</button>
+            <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #252b38",
+              padding: "6px 12px", color: "#7a7a82", cursor: "pointer", fontSize: 13 }}>☰</button>
             {menuOpen && (
               <>
                 <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
-                <div style={{ position: "absolute", right: 0, top: 36, background: "#111318", border: "1px solid #252b38", zIndex: 50, minWidth: 180, boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
+                <div style={{ position: "absolute", right: 0, top: 36, background: "#111318",
+                  border: "1px solid #252b38", zIndex: 50, minWidth: 180, boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
                   {TABS.map(t => (
                     <button key={t.key} onClick={() => { setTab(t.key); setMenuOpen(false); }}
-                      style={{ display: "block", width: "100%", padding: "13px 18px", border: "none", borderBottom: "1px solid #252b38",
+                      style={{ display: "block", width: "100%", padding: "13px 18px", border: "none",
+                        borderBottom: "1px solid #252b38",
                         background: tab === t.key ? "rgba(201,168,76,0.08)" : "transparent",
                         color: tab === t.key ? "#c9a84c" : "#e8e5de", fontSize: 13, cursor: "pointer", textAlign: "left" as const }}>
                       {t.label}
                     </button>
                   ))}
-                  <button onClick={() => router.push("/logout")} style={{ display: "block", width: "100%", padding: "12px 18px", border: "none", background: "transparent", color: "#7a7a82", fontSize: 12, cursor: "pointer", textAlign: "left" as const }}>Sign Out</button>
+                  <button onClick={() => router.push("/logout")} style={{ display: "block", width: "100%",
+                    padding: "12px 18px", border: "none", background: "transparent",
+                    color: "#7a7a82", fontSize: 12, cursor: "pointer", textAlign: "left" as const }}>Sign Out</button>
                 </div>
               </>
             )}
@@ -591,13 +587,89 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Content */}
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "20px 20px 60px" }}>
-        {tab === "overview"   && <Overview />}
-        {tab === "pipeline"   && <Pipeline />}
-        {tab === "personnel"  && <Personnel />}
-        {tab === "financials" && <Financials />}
-      </main>
+      {/* Body — sidebar + content on desktop, stacked on mobile */}
+      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+
+        {/* Sidebar — desktop only */}
+        {!isMobile && (
+          <div style={{ width: 220, flexShrink: 0, background: "#0d1018", borderRight: "1px solid #252b38",
+            display: "flex", flexDirection: "column", position: "sticky", top: 56, height: "calc(100vh - 56px)", overflowY: "auto" }}>
+            {/* Company info */}
+            <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid #252b38" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#e8e5de", marginBottom: 4 }}>{co?.company_name || "—"}</div>
+              <div style={{ fontSize: 11, color: "#7a7a82" }}>ABN {co?.abn || "—"}</div>
+              <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>
+                Acct: <span style={{ color: "#c9a84c", fontFamily: "monospace" }}>{co?.account_number || "—"}</span>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#5cb87a",
+                  background: "rgba(92,184,122,0.12)", border: "1px solid rgba(92,184,122,0.3)",
+                  padding: "3px 10px", borderRadius: 3 }}>Active</span>
+              </div>
+            </div>
+            {/* KPI mini stats */}
+            <div style={{ padding: "14px 18px", borderBottom: "1px solid #252b38" }}>
+              {[
+                { label: "Nominees",   value: co?.total_nominees ?? 0,  col: "#e8e5de" },
+                { label: "Total Fees", value: $k(fees),                  col: "#c9a84c" },
+                { label: "Baseline",   value: co?.baseline_total ?? 0,   col: "#7a7a82" },
+                { label: "NV1",        value: co?.nv1_total ?? 0,         col: "#6b9fd4" },
+                { label: "NV2",        value: co?.nv2_total ?? 0,         col: "#c9a84c" },
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, color: "#7a7a82" }}>{s.label}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: s.col }}>{s.value}</div>
+                </div>
+              ))}
+            </div>
+            {/* Nav */}
+            <nav style={{ padding: "8px 0", flex: 1 }}>
+              {TABS.map(t => (
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  style={{ display: "block", width: "100%", padding: "11px 18px", border: "none",
+                    borderLeft: tab === t.key ? "3px solid #c9a84c" : "3px solid transparent",
+                    background: tab === t.key ? "rgba(201,168,76,0.06)" : "transparent",
+                    color: tab === t.key ? "#c9a84c" : "#7a7a82",
+                    fontSize: 13, fontWeight: tab === t.key ? 600 : 400,
+                    cursor: "pointer", textAlign: "left" as const }}>
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+            {/* Footer */}
+            <div style={{ padding: "14px 18px", borderTop: "1px solid #252b38" }}>
+              <div style={{ fontSize: 10, color: "#3a3a52", letterSpacing: "0.05em" }}>AUSCLEAR CORPORATE PORTAL</div>
+              <div style={{ fontSize: 10, color: "#3a3a52", marginTop: 3 }}>support@ausclear.com.au</div>
+            </div>
+          </div>
+        )}
+
+        {/* Main content */}
+        <div style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
+          {/* Mobile tab bar */}
+          {isMobile && (
+            <div style={{ borderBottom: "1px solid #252b38", display: "flex", overflowX: "auto",
+              background: "#0d1018", flexShrink: 0 }}>
+              {TABS.map(t => (
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  style={{ padding: "12px 16px", border: "none",
+                    borderBottom: tab === t.key ? "2px solid #c9a84c" : "2px solid transparent",
+                    background: "transparent", color: tab === t.key ? "#c9a84c" : "#7a7a82",
+                    fontSize: 13, fontWeight: tab === t.key ? 600 : 400,
+                    cursor: "pointer", whiteSpace: "nowrap" as const }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <main style={{ padding: isMobile ? "16px 16px 60px" : "24px 28px 60px", maxWidth: isMobile ? "100%" : 1100 }}>
+            {tab === "overview"   && <Overview />}
+            {tab === "pipeline"   && <Pipeline />}
+            {tab === "personnel"  && <Personnel />}
+            {tab === "financials" && <Financials />}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
