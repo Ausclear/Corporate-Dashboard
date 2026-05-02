@@ -204,8 +204,10 @@ export default function Dashboard() {
         {[
           { label: "Nominees",   value: co?.total_nominees ?? 0, col: "#e8e5de" },
           { label: "Total Fees", value: $k(fees),                col: "#c9a84c" },
+          { label: "Baseline",   value: co?.baseline_total ?? 0, col: "#7a7a82" },
           { label: "NV1",        value: co?.nv1_total ?? 0,       col: "#6b9fd4" },
           { label: "NV2",        value: co?.nv2_total ?? 0,       col: "#c9a84c" },
+          { label: "New",        value: co?.new_total ?? 0,       col: "#5cb87a" },
         ].map((s, i) => (
           <div key={i} style={{ background: "#111318", padding: "16px 18px" }}>
             <div style={{ fontSize: 10, color: "#7a7a82", textTransform: "uppercase" as const, letterSpacing: "0.14em", marginBottom: 6 }}>{s.label}</div>
