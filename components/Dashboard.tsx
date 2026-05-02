@@ -677,7 +677,8 @@ const STAGE_LABELS: Record<string, string> = {
   "AGSVA Clearance Denied":    "Security Clearance Denied",
   "Closed Lost":               "Closed",
   "Closed Won":                "Completed",
-};use client";
+};
+"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
