@@ -646,42 +646,37 @@ export default function Dashboard() {
       </main>
     </div>
   );
-}// Client-friendly labels — all real Zoho stage names mapped
+}// Client-friendly labels — corporate account pipeline + corporate employee pipeline only
 const STAGE_LABELS: Record<string, string> = {
-  // ── Corporate account pipeline stages ───────────────────────────────────
-  "Onboard Corporate Account":  "Account Setup",
-  "Prepare Contract":           "Preparing Agreement",
-  "Contract Sent":              "Agreement Sent",
-  "Awaiting Signature":         "Awaiting Signature",
-  "Contracts Signed":           "Agreement Signed",
-  "Contract Signed":            "Agreement Signed",
-  "Create Invoice":             "Invoice Preparation",
-  "Invoice Sent":               "Invoice Sent",
-  "Invoice Outstanding":        "Payment Pending",
-  "Invoice Paid":               "Payment Received",
-  "Corporate Approved":         "Active & Approved",
-  // ── Employee clearance stages ────────────────────────────────────────────
-  "Onboard Client":             "Client Onboarding",
-  "Onboard Employee for ESC":   "Employee Onboarding",
-  "Sponsorship Created":        "Sponsorship Created",
-  "AGSVA Portal Access":        "Portal Access Setup",
-  "Application in Progress":    "Application in Progress",
-  "Application Submitted":      "Application Submitted",
-  "Documents Requested":        "Documents Requested",
-  "Documents Received":         "Documents Received",
-  "Submitted to AGSVA":         "Submitted to AGSVA",
-  "Vetting in Progress":        "Vetting in Progress",
-  "Vetting Complete":           "Vetting Complete",
-  "Clearance Granted":          "Clearance Granted",
-  "AGSVA Clearance Denied":     "Clearance Denied",
-  "Clearance Denied":           "Clearance Denied",
-  "Upgrade Sponsorship Created":"Upgrade Initiated",
-  "Upgrade Submitted to AGSVA": "Upgrade Submitted",
-  "Upgrade Vetting in Progress":"Upgrade in Progress",
-  "Upgrade Clearance Granted":  "Upgrade Granted",
-  "Transfer Sponsorship Created":"Transfer Initiated",
-  "Closed Lost":                "Closed",
-  "Closed Won":                 "Completed",
+  // ── Corporate account pipeline ───────────────────────────────────────────
+  "Onboard Corporate Account": "Account Setup",
+  "Prepare Contract":          "Preparing Agreement",
+  "Send Contract":             "Agreement Sent",
+  "Contract Sent":             "Agreement Sent",
+  "Awaiting Signature":        "Awaiting Signature",
+  "Contracts Signed":          "Agreement Signed",
+  "Contract Signed":           "Agreement Signed",
+  "Create Invoice":            "Invoice Preparation",
+  "Invoice Sent":              "Invoice Sent",
+  "Invoice Outstanding":       "Payment Pending",
+  "Invoice Paid":              "Payment Received",
+  "Corporate Approved":        "Active & Approved",
+  "Corporate Declined":        "Declined",
+  // ── Corporate employee pipeline ──────────────────────────────────────────
+  "Sponsorship Created":       "Sponsorship Created",
+  "Onboard Employee for ESC":  "Commencing Employment Screening",
+  "ESC Pending":               "Screening Underway",
+  "ESC Completed":             "Screening Complete",
+  "ESC Approved":              "Screening Approved",
+  "AGSVA Portal Access":       "Activating AGSVA Portal",
+  "AGSVA Portal":              "AGSVA Portal Active",
+  "AGSVA Clearance Onboard":   "Lodging Security Application",
+  "AGSVA Clearance Pending":   "Vetting Assessment Underway",
+  "AGSVA Clearance Granted":   "Security Clearance Granted",
+  "ESC Denied":                "Screening Denied",
+  "AGSVA Clearance Denied":    "Security Clearance Denied",
+  "Closed Lost":               "Closed",
+  "Closed Won":                "Completed",
 };use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
