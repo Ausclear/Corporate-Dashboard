@@ -261,7 +261,7 @@ export default function Dashboard() {
             borderBottom: i < Math.min(3, ppl.length - 1) ? "1px solid #252b38" : "none" }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: "#e8e5de" }}>{p.employee_name}</div>
-              <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{p.stage || "—"}</div>
+              <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{STAGE_LABELS[p.stage] || p.stage || "—"}</div>
             </div>
             <Tag t={clr(p.clearance_type)} />
           </div>
@@ -389,7 +389,7 @@ export default function Dashboard() {
                           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c", flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 600, color: "#e8e5de" }}>{p.employee_name}</div>
-                            <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{p.stage || "—"}</div>
+                            <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{STAGE_LABELS[p.stage] || p.stage || "—"}</div>
                           </div>
                           <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                             <Tag t={t} />
@@ -410,7 +410,7 @@ export default function Dashboard() {
                                 { label: "Mobile",          value: p.mobile || "—" },
                                 { label: "Clearance Level", value: p.clearance_type || "—" },
                                 { label: "Request Type",    value: p.clearance_request_type || "New" },
-                                { label: "Stage",           value: p.stage || "—" },
+                                { label: "Stage",           value: STAGE_LABELS[p.stage] || p.stage || "—" },
                                 { label: "Onboarding",      value: p.onboarding_status || "—" },
                                 { label: "Batch Date",      value: $d(p.batch_date) },
                                 { label: "Linked Deal",     value: p.linked_deal_name || "—" },
@@ -459,7 +459,7 @@ export default function Dashboard() {
                 <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: "#c9a84c" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#e8e5de" }}>{p.employee_name}</div>
-                  <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{p.stage || "—"}</div>
+                  <div style={{ fontSize: 11, color: "#7a7a82", marginTop: 2 }}>{STAGE_LABELS[p.stage] || p.stage || "—"}</div>
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                   <Tag t={t} />
@@ -481,7 +481,7 @@ export default function Dashboard() {
                       { label: "Mobile",          value: p.mobile || "—" },
                       { label: "Clearance Level", value: p.clearance_type || "—" },
                       { label: "Request Type",    value: p.clearance_request_type || "New" },
-                      { label: "Stage",           value: p.stage || "—" },
+                      { label: "Stage",           value: STAGE_LABELS[p.stage] || p.stage || "—" },
                       { label: "Onboarding",      value: p.onboarding_status || "—" },
                       { label: "Batch Date",      value: $d(p.batch_date) },
                       { label: "Revalidation",    value: $d(p.revalidation_date || null) },
