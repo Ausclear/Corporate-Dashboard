@@ -44,6 +44,16 @@ const STAGE_LABELS: Record<string, string> = {
   "Invoice Outstanding":       "Payment Pending",
   "Invoice Paid":              "Payment Received",
   "Corporate Approved":        "Active & Approved",
+  // Employee stages
+  "Sponsorship Created": "Sponsorship Created",
+  "Onboard Employee for ESC": "Onboarding",
+  "Application Submitted": "Application Submitted",
+  "Submitted to AGSVA": "Submitted to AGSVA",
+  "Vetting in Progress": "Vetting in Progress",
+  "Clearance Granted": "Clearance Granted",
+  "Clearance Denied": "Clearance Denied",
+  "Closed Lost": "Closed",
+  "Closed Won": "Completed",
 };
 
 // Default stages if Zoho pipeline fetch fails
