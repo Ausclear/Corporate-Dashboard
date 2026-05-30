@@ -33,7 +33,7 @@ export async function GET() {
   try {
     const token = await getToken();
     const h = { Authorization: `Zoho-oauthtoken ${token}` };
-    const base = "https://www.zohoapis.com.au/crm/v6";
+    const base = "https://www.zohoapis.com.au/crm/v2";
 
     const [accountRes, dealsRes] = await Promise.all([
       fetch(`${base}/Accounts/${ACCOUNT_ID}`, { headers: h }),
@@ -46,7 +46,7 @@ export async function GET() {
     ]);
 
     const account = accountData.data?.[0];
-    if (!account) throw new Error("Account not found");
+    if (!account) throw new Error(`Account not found (status: ${accountRes.status}, data: ${JSON.stringify(accountData).substring(0,200)})`);
 
     const allDeals: any[] = dealsData.data || [];
     const nominees: any[] = account.Nominated_Employees || [];
