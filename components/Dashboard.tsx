@@ -398,8 +398,8 @@ export default function Dashboard() {
                               { label:"Request Type",    value:p.clearance_request_type || "New" },
                               { label:"Stage",           value:lbl(p.stage) || "—" },
                               { label:"Onboarding",      value:lbl(p.onboarding_status) || "—" },
-                              { label:"Batch Date",      value:$d(p.batch_date) },
-                              { label:"Linked Deal",     value:p.linked_deal_name || "—" },
+                              { label:"Submission Date",  value:$d(p.batch_date) },
+                              
                             ].map((row, ri) => (
                               <div key={ri}>
                                 <div style={{ fontSize:9, color:C.gold, textTransform:"uppercase" as const,
@@ -469,9 +469,9 @@ export default function Dashboard() {
                       { label:"Request Type",    value:p.clearance_request_type || "New" },
                       { label:"Stage",           value:lbl(p.stage) || "—" },
                       { label:"Onboarding",      value:lbl(p.onboarding_status) || "—" },
-                      { label:"Batch Date",      value:$d(p.batch_date) },
-                      { label:"Revalidation",    value:$d(p.revalidation_date) },
-                      { label:"Linked Deal",     value:p.linked_deal_name || "—" },
+                      { label:"Submission Date",  value:$d(p.batch_date) },
+                      { label:"Revalidation",     value:$d(p.revalidation_date) },
+                      
                     ].map((row, ri) => (
                       <div key={ri}>
                         <div style={{ fontSize:10, color:C.gold, textTransform:"uppercase" as const,
