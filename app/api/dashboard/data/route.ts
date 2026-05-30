@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export const dynamic = 'force-dynamic';
 
 const CLIENT_ID     = process.env.ZOHO_CLIENT_ID || "1000.57XM0OOBWZHPCV60VN2ZEC9AV4P80N";
