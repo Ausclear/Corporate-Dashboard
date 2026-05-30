@@ -6,31 +6,47 @@ const REFRESH_TOKEN = "1000.cc0c290f4c0aebf03439116960721d2f.ba8c1468f101c30a59f
 const TEST_ACCOUNT_ID = "80905000010862243"; // Adept CONTRACTS
 
 async function getFreshAccessToken(): Promise<string> {
+  const params = new URLSearchParams({
+    grant_type: "refresh_token",
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    refresh_token: REFRESH_TOKEN,
+  });
+
   const res = await fetch("https://accounts.zoho.com.au/oauth/v2/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      refresh_token: REFRESH_TOKEN,
-    }).toString(),
+    body: params.toString(),
   });
-  const data = await res.json();
-  if (!data.access_token) throw new Error("Unable to refresh access token");
+
+  const text = await res.text();
+  if (!text || text.trim() === "") {
+    throw new Error(`Token endpoint returned empty response (status ${res.status})`);
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Token endpoint returned invalid JSON: ${text.substring(0, 200)}`);
+  }
+
+  if (!data.access_token) {
+    throw new Error(`No access_token in response: ${JSON.stringify(data)}`);
+  }
+
   return data.access_token;
 }
 
 export async function GET() {
   try {
-    const token = await getFreshAccessToken();
-    const h = { Authorization: `Zoho-oauthtoken ${token}` };
+    const accessToken = await getFreshAccessToken();
+    const h = { Authorization: `Zoho-oauthtoken ${accessToken}` };
     const base = "https://www.zohoapis.com.au/crm/v6";
 
-    // Fetch account and all deals in parallel
     const [accountRes, allDealsRes] = await Promise.all([
       fetch(`${base}/Accounts/${TEST_ACCOUNT_ID}`, { headers: h }),
-      fetch(`${base}/Deals/search?criteria=(Account_Name.id:equals:${TEST_ACCOUNT_ID})&fields=Deal_Name,Stage,Amount,Created_Time,Clearance_Type,Clearance_Request_Type&per_page=50`, { headers: h }),
+      fetch(`${base}/Deals/search?criteria=(Account_Name.id:equals:${TEST_ACCOUNT_ID})&fields=Deal_Name,Stage,Amount,Created_Time,Clearance_Type&per_page=50`, { headers: h }),
     ]);
 
     const [accountData, allDealsData] = await Promise.all([
@@ -39,19 +55,15 @@ export async function GET() {
     ]);
 
     const account = accountData.data?.[0];
-    if (!account) throw new Error("Account not found");
+    if (!account) throw new Error("Account not found in Zoho");
 
     const allDeals: any[] = allDealsData.data || [];
     const nominees: any[] = account.Nominated_Employees || [];
 
-    // Split corporate batch deals from individual employee deals
     const corpDeals = allDeals.filter((d: any) => d.Clearance_Type === "Corporate Clearance");
-    const empDeals  = allDeals.filter((d: any) => d.Clearance_Type !== "Corporate Clearance");
+    const corpDeal  = corpDeals[0] || null;
 
-    // Primary corp deal (for pipeline stage)
-    const corpDeal = corpDeals[0] || null;
-
-    // Group nominees by batch_date to form batches
+    // Group nominees by batch_date
     const batchMap: Record<string, any[]> = {};
     nominees.forEach((ne: any) => {
       const key = ne.Batch_Date || "Unknown";
@@ -59,84 +71,65 @@ export async function GET() {
       batchMap[key].push(ne);
     });
 
-    // Build fee rates
-    const AGSVA_FEES: Record<string, number> = {
+    const AGSVA: Record<string, number> = {
       "Baseline Security Clearance": 884,
       "NV1 Security Clearance": 1355,
       "NV2 Security Clearance": 2486,
     };
     const APP_FEE = 400;
-    const SPONSORSHIP_FEE = 1460;
+    const SPONSOR_FEE = 1460;
 
-    // Build batches — one per corp deal, nominees grouped by batch date
     const batches = corpDeals.map((cd: any, idx: number) => {
-      const batchKeys = Object.keys(batchMap).sort();
-      const batchKey  = batchKeys[idx] || batchKeys[0] || "Unknown";
-      const batchNoms = batchMap[batchKey] || nominees; // fallback to all nominees
+      const keys = Object.keys(batchMap).sort();
+      const key  = keys[idx] || keys[0] || "Unknown";
+      const noms = batchMap[key] || nominees;
 
-      const baselineCount = batchNoms.filter((n: any) => n.Clearance_Type?.includes("Baseline")).length;
-      const nv1Count      = batchNoms.filter((n: any) => n.Clearance_Type?.includes("NV1")).length;
-      const nv2Count      = batchNoms.filter((n: any) => n.Clearance_Type?.includes("NV2")).length;
-      const upgradeCount  = batchNoms.filter((n: any) => n.Clearance_Request_Type === "Upgrade").length;
-      const newCount      = batchNoms.filter((n: any) => n.Clearance_Request_Type !== "Upgrade").length;
-
-      // Calculate batch financials
-      const agsvaFees    = batchNoms.reduce((s: number, n: any) => s + (AGSVA_FEES[n.Clearance_Type] || 0), 0);
-      const appFees      = batchNoms.length * APP_FEE;
-      const sponsorFees  = batchNoms.length * SPONSORSHIP_FEE;
-      const totalFees    = agsvaFees + appFees + sponsorFees;
-      const exAgsva      = appFees + sponsorFees;
+      const agsva  = noms.reduce((s: number, n: any) => s + (AGSVA[n.Clearance_Type] || 0), 0);
+      const appF   = noms.length * APP_FEE;
+      const sponF  = noms.length * SPONSOR_FEE;
 
       return {
-        id:              cd.id,
-        deal_name:       cd.Deal_Name,
-        stage:           cd.Stage,
-        amount:          cd.Amount || totalFees,
-        created_time:    cd.Created_Time,
-        batch_date:      batchKey,
-        nominee_count:   batchNoms.length,
-        baseline_count:  baselineCount,
-        nv1_count:       nv1Count,
-        nv2_count:       nv2Count,
-        upgrade_count:   upgradeCount,
-        new_count:       newCount,
-        agsva_fees:      agsvaFees,
-        app_fees:        appFees,
-        sponsor_fees:    sponsorFees,
-        total_fees:      totalFees,
-        ex_agsva:        exAgsva,
-        nominees: batchNoms.map((ne: any) => ({
-          id:                     ne.id,
-          employee_name:          `${ne.First_Name} ${ne.Last_Name}`.trim(),
-          email:                  ne.Email,
-          mobile:                 ne.Mobile,
-          clearance_type:         ne.Clearance_Type,
+        id: cd.id, deal_name: cd.Deal_Name, stage: cd.Stage,
+        amount: cd.Amount || (agsva + appF + sponF),
+        created_time: cd.Created_Time, batch_date: key,
+        nominee_count:  noms.length,
+        baseline_count: noms.filter((n: any) => n.Clearance_Type?.includes("Baseline")).length,
+        nv1_count:      noms.filter((n: any) => n.Clearance_Type?.includes("NV1")).length,
+        nv2_count:      noms.filter((n: any) => n.Clearance_Type?.includes("NV2")).length,
+        upgrade_count:  noms.filter((n: any) => n.Clearance_Request_Type === "Upgrade").length,
+        new_count:      noms.filter((n: any) => n.Clearance_Request_Type !== "Upgrade").length,
+        agsva_fees: agsva, app_fees: appF, sponsor_fees: sponF,
+        total_fees: agsva + appF + sponF, ex_agsva: appF + sponF,
+        nominees: noms.map((ne: any) => ({
+          id: ne.id,
+          employee_name: `${ne.First_Name} ${ne.Last_Name}`.trim(),
+          email: ne.Email, mobile: ne.Mobile,
+          clearance_type: ne.Clearance_Type,
           clearance_request_type: ne.Clearance_Request_Type || "New",
-          stage:                  ne.Deal_Stage,
-          onboarding_status:      ne.Onboarding_Status,
-          batch_date:             ne.Batch_Date,
-          linked_deal_name:       ne.Linked_Deal?.name || null,
-          employee_number:        ne.Number,
+          stage: ne.Deal_Stage, onboarding_status: ne.Onboarding_Status,
+          batch_date: ne.Batch_Date, linked_deal_name: ne.Linked_Deal?.name || null,
+          employee_number: ne.Number,
         })),
       };
     });
 
-    // If no corp deals, create synthetic batch
     if (batches.length === 0 && nominees.length > 0) {
-      const agsvaFees   = nominees.reduce((s: number, n: any) => s + (AGSVA_FEES[n.Clearance_Type] || 0), 0);
-      const appFees     = nominees.length * APP_FEE;
-      const sponsorFees = nominees.length * SPONSORSHIP_FEE;
+      const agsva = nominees.reduce((s: number, n: any) => s + (AGSVA[n.Clearance_Type] || 0), 0);
+      const appF  = nominees.length * APP_FEE;
+      const sponF = nominees.length * SPONSOR_FEE;
       batches.push({
         id: "batch_1", deal_name: `${account.Account_Name} – Batch 1`,
-        stage: "Onboard Corporate Account", amount: agsvaFees + appFees + sponsorFees,
-        created_time: account.Created_Time, batch_date: nominees[0]?.Batch_Date || null,
+        stage: "Onboard Corporate Account",
+        amount: agsva + appF + sponF,
+        created_time: account.Created_Time,
+        batch_date: nominees[0]?.Batch_Date || null,
         nominee_count: nominees.length,
         baseline_count: nominees.filter((n: any) => n.Clearance_Type?.includes("Baseline")).length,
-        nv1_count: nominees.filter((n: any) => n.Clearance_Type?.includes("NV1")).length,
-        nv2_count: nominees.filter((n: any) => n.Clearance_Type?.includes("NV2")).length,
+        nv1_count:      nominees.filter((n: any) => n.Clearance_Type?.includes("NV1")).length,
+        nv2_count:      nominees.filter((n: any) => n.Clearance_Type?.includes("NV2")).length,
         upgrade_count: 0, new_count: nominees.length,
-        agsva_fees: agsvaFees, app_fees: appFees, sponsor_fees: sponsorFees,
-        total_fees: agsvaFees + appFees + sponsorFees, ex_agsva: appFees + sponsorFees,
+        agsva_fees: agsva, app_fees: appF, sponsor_fees: sponF,
+        total_fees: agsva + appF + sponF, ex_agsva: appF + sponF,
         nominees: nominees.map((ne: any) => ({
           id: ne.id, employee_name: `${ne.First_Name} ${ne.Last_Name}`.trim(),
           email: ne.Email, mobile: ne.Mobile, clearance_type: ne.Clearance_Type,
@@ -173,38 +166,30 @@ export async function GET() {
     };
 
     const personnel = nominees.map((ne: any) => ({
-      id:                     ne.id,
-      employee_name:          `${ne.First_Name} ${ne.Last_Name}`.trim(),
-      first_name:             ne.First_Name,
-      last_name:              ne.Last_Name,
-      email:                  ne.Email,
-      mobile:                 ne.Mobile,
-      clearance_type:         ne.Clearance_Type,
+      id: ne.id,
+      employee_name: `${ne.First_Name} ${ne.Last_Name}`.trim(),
+      first_name: ne.First_Name, last_name: ne.Last_Name,
+      email: ne.Email, mobile: ne.Mobile,
+      clearance_type: ne.Clearance_Type,
       clearance_request_type: ne.Clearance_Request_Type || "New",
-      stage:                  ne.Deal_Stage,
-      onboarding_status:      ne.Onboarding_Status,
-      batch_date:             ne.Batch_Date,
-      linked_deal_name:       ne.Linked_Deal?.name || null,
-      employee_number:        ne.Number,
-      revalidation_date:      null,
+      stage: ne.Deal_Stage, onboarding_status: ne.Onboarding_Status,
+      batch_date: ne.Batch_Date, linked_deal_name: ne.Linked_Deal?.name || null,
+      employee_number: ne.Number, revalidation_date: null,
     }));
 
     const activity = nominees.map((ne: any) => ({
-      id:         ne.id + "_act",
-      event:      `${ne.First_Name} ${ne.Last_Name} — ${ne.Clearance_Type} sponsorship created`,
+      id: ne.id + "_act",
+      event: `${ne.First_Name} ${ne.Last_Name} — ${ne.Clearance_Type} sponsorship created`,
       event_date: ne.Batch_Date || account.Created_Time,
     }));
 
     return NextResponse.json({
       company, personnel, activity, batches,
-      user: {
-        email:        account.Billing_Email,
-        display_name: `${account.Billing_First_Name} ${account.Billing_Last_Name}`,
-      },
+      user: { email: account.Billing_Email, display_name: `${account.Billing_First_Name} ${account.Billing_Last_Name}` },
     });
 
   } catch (err: any) {
-    console.error("Dashboard data error:", err);
-    return NextResponse.json({ error: err.message || "Failed to load" }, { status: 500 });
+    console.error("Dashboard data error:", err?.message || err);
+    return NextResponse.json({ error: err?.message || "Failed to load" }, { status: 500 });
   }
 }
