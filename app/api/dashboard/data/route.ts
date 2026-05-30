@@ -13,7 +13,7 @@ async function getFreshAccessToken(): Promise<string> {
     refresh_token: REFRESH_TOKEN,
   });
 
-  const res = await fetch("https://accounts.zoho.com.au/oauth/v2/token", {
+  const res = await fetch("https://accounts.zoho.com/oauth/v2/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
