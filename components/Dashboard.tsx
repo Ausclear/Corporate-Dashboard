@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import NominateModal from "./NominateModal";
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 const C = {
@@ -154,6 +155,7 @@ function Chevrons({ stages, active }: { stages: string[]; active: string }) {
         })}
       </svg>
     </div>
+    </>
   );
 }
 
@@ -163,6 +165,7 @@ function Card({ children, top }: { children: React.ReactNode; top?: string }) {
     <div style={{ background:C.card, border:`1px solid ${C.line}`, borderTop:top?`2px solid ${top}`:"none" }}>
       {children}
     </div>
+    </>
   );
 }
 function CardRow({ label, btn, onClick }: { label:string; btn?:string; onClick?:()=>void }) {
@@ -171,6 +174,7 @@ function CardRow({ label, btn, onClick }: { label:string; btn?:string; onClick?:
       <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{label}</span>
       {btn && <button onClick={onClick} style={{ fontSize:11, color:C.gold, background:"none", border:"none", cursor:"pointer", padding:0 }}>{btn}</button>}
     </div>
+    </>
   );
 }
 
@@ -183,6 +187,7 @@ export default function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [expandedP, setExpandedP] = useState<string | null>(null);
+  const [showNominate, setShowNominate] = useState(false);
   const [expandedB, setExpandedB] = useState<string | null>(null);
   const [expandedE, setExpandedE] = useState<string | null>(null);
   const router = useRouter();
@@ -428,7 +433,7 @@ export default function Dashboard() {
         <div style={{ fontSize:20, fontWeight:700, color:C.text }}>
           Personnel <span style={{ fontSize:14, color:C.muted, fontWeight:400 }}>({ppl.length})</span>
         </div>
-        <button style={{ background:C.gold, border:"none", padding:"9px 18px", color:C.bg,
+        <button onClick={() => setShowNominate(true)} style={{ background:C.gold, border:"none", padding:"9px 18px", color:C.bg,
           fontWeight:700, fontSize:12, cursor:"pointer", borderRadius:4 }}>+ Nominate</button>
       </div>
       <Card>
@@ -569,6 +574,8 @@ export default function Dashboard() {
 
   // ── SHELL ─────────────────────────────────────────────────────────────────────
   return (
+    <>
+    {showNominate && <NominateModal onClose={() => setShowNominate(false)} />}
     <div style={{ minHeight:"100vh", background:C.bg, color:C.text,
       fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", display:"flex", flexDirection:"column" }}>
 
@@ -692,5 +699,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </>
   );
 }
