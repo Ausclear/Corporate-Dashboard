@@ -433,7 +433,7 @@ export default function Dashboard() {
         <div style={{ fontSize:20, fontWeight:700, color:C.text }}>
           Personnel <span style={{ fontSize:14, color:C.muted, fontWeight:400 }}>({ppl.length})</span>
         </div>
-        <button onClick={() => setShowNominate(true)} style={{ background:C.gold, border:"none", padding:"9px 18px", color:C.bg,
+        <button oonClick={() => setShowNominate(true)} style={{ background:C.gold, border:"none", padding:"9px 18px", color:C.bg,
           fontWeight:700, fontSize:12, cursor:"pointer", borderRadius:4 }}>+ Nominate</button>
       </div>
       <Card>
