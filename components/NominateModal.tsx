@@ -14,45 +14,12 @@ function blank(): Employee {
     email:"", mobile:"", clearance_type:"", clearance_request_type:"New" };
 }
 
-const inputBase: React.CSSProperties = {
+const cell: React.CSSProperties = {
   background:"#111318", border:"1px solid #1f2535", color:"#e8e5de",
-  padding:"12px 14px", fontSize:15, borderRadius:6, outline:"none",
-  width:"100%", boxSizing:"border-box",
+  padding:"9px 10px", fontSize:13, outline:"none", width:"100%",
+  boxSizing:"border-box" as const,
   fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
 };
-
-function Field({ label, value, onChange, type="text", required=false, placeholder="" }:
-  { label:string; value:string; onChange:(v:string)=>void; type?:string; required?:boolean; placeholder?:string }) {
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-      <label style={{ fontSize:11, fontWeight:700, color:"#c9a84c", textTransform:"uppercase" as const, letterSpacing:"0.1em" }}>
-        {label}{required && <span style={{ color:"#c97a7a" }}> *</span>}
-      </label>
-      <input type={type} value={value} placeholder={placeholder}
-        onChange={e => onChange(e.target.value)} style={inputBase}
-        onFocus={e => (e.target as HTMLInputElement).style.borderColor="#c9a84c"}
-        onBlur={e  => (e.target as HTMLInputElement).style.borderColor="#1f2535"} />
-    </div>
-  );
-}
-
-function SelectField({ label, value, onChange, options, required=false }:
-  { label:string; value:string; onChange:(v:string)=>void; options:string[]; required?:boolean }) {
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-      <label style={{ fontSize:11, fontWeight:700, color:"#c9a84c", textTransform:"uppercase" as const, letterSpacing:"0.1em" }}>
-        {label}{required && <span style={{ color:"#c97a7a" }}> *</span>}
-      </label>
-      <select value={value} onChange={e => onChange(e.target.value)}
-        style={{ ...inputBase, color:value?"#e8e5de":"#7a7a82", cursor:"pointer" }}
-        onFocus={e => (e.target as HTMLSelectElement).style.borderColor="#c9a84c"}
-        onBlur={e  => (e.target as HTMLSelectElement).style.borderColor="#1f2535"}>
-        <option value="">Select...</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-}
 
 export default function NominateModal({ onClose, onSubmit }:
   { onClose:()=>void; onSubmit?:(employees:Employee[])=>void }) {
@@ -101,17 +68,25 @@ export default function NominateModal({ onClose, onSubmit }:
     ? { position:"fixed", bottom:0, left:0, right:0, top:0,
         background:"#07070a", zIndex:201, display:"flex", flexDirection:"column" }
     : { position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
-        width:"min(680px,96vw)", maxHeight:"90vh",
+        width:"min(1000px,96vw)", maxHeight:"90vh",
         background:"#07070a", border:"1px solid #1f2535", borderRadius:8,
         zIndex:201, display:"flex", flexDirection:"column",
         boxShadow:"0 24px 64px rgba(0,0,0,0.8)" };
+
+  const COLS = [
+    { label:"First Name", field:"first_name" as keyof Employee, required:true,  type:"text",  placeholder:"First name",         w:130 },
+    { label:"Last Name",  field:"last_name"  as keyof Employee, required:true,  type:"text",  placeholder:"Last name",          w:130 },
+    { label:"Email",      field:"email"      as keyof Employee, required:true,  type:"email", placeholder:"email@company.com",  w:200 },
+    { label:"Mobile",     field:"mobile"     as keyof Employee, required:false, type:"tel",   placeholder:"04xx xxx xxx",       w:130 },
+    { label:"Clearance",  field:"clearance_type" as keyof Employee, required:true, type:"select", placeholder:"", w:180 },
+    { label:"Request",    field:"clearance_request_type" as keyof Employee, required:true, type:"select", placeholder:"", w:110 },
+  ];
 
   return (
     <>
       <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:200, backdropFilter:"blur(4px)" }} />
       <div style={shell}>
 
-        {/* Top strip / drag handle */}
         {isMobile
           ? <div style={{ display:"flex", justifyContent:"center", padding:"14px 0 6px", flexShrink:0 }}>
               <div style={{ width:36, height:4, borderRadius:2, background:"#2a2a3a" }} />
@@ -120,7 +95,7 @@ export default function NominateModal({ onClose, onSubmit }:
         }
 
         {/* Header */}
-        <div style={{ padding:isMobile?"8px 20px 14px":"18px 22px 14px",
+        <div style={{ padding:isMobile?"8px 20px 14px":"16px 22px 14px",
           borderBottom:"1px solid #1f2535", display:"flex", justifyContent:"space-between",
           alignItems:"center", flexShrink:0 }}>
           <div>
@@ -150,36 +125,25 @@ export default function NominateModal({ onClose, onSubmit }:
           </div>
 
         ) : step === "count" ? (
-          /* ── STEP 1: count picker ── */
           <div style={{ flex:1, display:"flex", flexDirection:"column",
             alignItems:"center", justifyContent:"center", padding:"32px 24px" }}>
             <div style={{ fontSize:14, color:"#7a7a82", marginBottom:24, textAlign:"center" as const }}>
               Select the number of employees to nominate
             </div>
-
-            {/* Number stepper */}
             <div style={{ display:"flex", alignItems:"center", gap:20, marginBottom:40 }}>
-              <button
-                onClick={() => setCount(c => Math.max(1, c-1))}
+              <button onClick={() => setCount(c => Math.max(1, c-1))}
                 style={{ width:52, height:52, borderRadius:"50%", background:"#161922",
-                  border:"1px solid #1f2535", color:"#e8e5de", fontSize:22,
-                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                  fontFamily:"inherit" }}>−</button>
+                  border:"1px solid #1f2535", color:"#e8e5de", fontSize:22, cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"inherit" }}>−</button>
               <div style={{ textAlign:"center" as const }}>
                 <div style={{ fontSize:56, fontWeight:700, color:"#c9a84c", lineHeight:1 }}>{count}</div>
-                <div style={{ fontSize:12, color:"#7a7a82", marginTop:4 }}>
-                  employee{count!==1?"s":""}
-                </div>
+                <div style={{ fontSize:12, color:"#7a7a82", marginTop:4 }}>employee{count!==1?"s":""}</div>
               </div>
-              <button
-                onClick={() => setCount(c => Math.min(20, c+1))}
+              <button onClick={() => setCount(c => Math.min(20, c+1))}
                 style={{ width:52, height:52, borderRadius:"50%", background:"#161922",
-                  border:"1px solid #1f2535", color:"#e8e5de", fontSize:22,
-                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                  fontFamily:"inherit" }}>+</button>
+                  border:"1px solid #1f2535", color:"#e8e5de", fontSize:22, cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"inherit" }}>+</button>
             </div>
-
-            {/* Quick pick buttons */}
             <div style={{ display:"flex", gap:10, marginBottom:40, flexWrap:"wrap" as const, justifyContent:"center" }}>
               {[1,2,3,5,10].map(n => (
                 <button key={n} onClick={() => setCount(n)}
@@ -187,12 +151,9 @@ export default function NominateModal({ onClose, onSubmit }:
                     fontFamily:"inherit", fontWeight:count===n?700:400,
                     background:count===n?"rgba(201,168,76,0.15)":"#161922",
                     border:`1px solid ${count===n?"#c9a84c":"#1f2535"}`,
-                    color:count===n?"#c9a84c":"#7a7a82" }}>
-                  {n}
-                </button>
+                    color:count===n?"#c9a84c":"#7a7a82" }}>{n}</button>
               ))}
             </div>
-
             <button onClick={handleCountConfirm}
               style={{ background:"#c9a84c", border:"none", padding:"14px 48px",
                 color:"#07070a", fontWeight:700, cursor:"pointer", borderRadius:8,
@@ -202,82 +163,96 @@ export default function NominateModal({ onClose, onSubmit }:
           </div>
 
         ) : (
-          /* ── STEP 2: employee forms ── */
+          /* ── STEP 2: horizontal subform table ── */
           <>
-            <div style={{ flex:1, overflowY:"auto", padding:isMobile?"14px 16px":"16px 22px",
-              display:"flex", flexDirection:"column", gap:14 }}>
-
-              {employees.map((emp, i) => {
-                const valid = emp.first_name && emp.last_name && emp.email &&
-                              emp.clearance_type && emp.clearance_request_type;
-                return (
-                  <div key={emp.id} style={{ background:"#161922", border:"1px solid #1f2535",
-                    borderRadius:8, overflow:"hidden" }}>
-                    <div style={{ padding:"12px 16px", borderBottom:"1px solid #1f2535",
-                      display:"flex", justifyContent:"space-between", alignItems:"center",
-                      background:"#111318" }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                        <div style={{ width:26, height:26, borderRadius:"50%",
-                          background:"rgba(201,168,76,0.12)", border:"1px solid rgba(201,168,76,0.35)",
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:11, fontWeight:700, color:"#c9a84c", flexShrink:0 }}>
-                          {i+1}
-                        </div>
-                        <span style={{ fontSize:14, fontWeight:600,
-                          color:emp.first_name||emp.last_name?"#e8e5de":"#7a7a82" }}>
-                          {emp.first_name||emp.last_name
-                            ? `${emp.first_name} ${emp.last_name}`.trim()
-                            : "Employee Details"}
-                        </span>
-                        {valid && <span style={{ fontSize:11, color:"#5cb87a",
-                          background:"rgba(92,184,122,0.1)", border:"1px solid rgba(92,184,122,0.3)",
-                          padding:"2px 8px", borderRadius:3 }}>✓</span>}
-                      </div>
-                      {employees.length > 1 && (
-                        <button onClick={() => remove(emp.id)}
-                          style={{ background:"rgba(201,122,122,0.1)", border:"1px solid rgba(201,122,122,0.3)",
-                            color:"#c97a7a", padding:"6px 12px", fontSize:13, cursor:"pointer",
-                            borderRadius:4, fontFamily:"inherit" }}>Remove</button>
-                      )}
-                    </div>
-                    <div style={{ padding:16, display:"grid",
-                      gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:14 }}>
-                      <Field label="First Name" required value={emp.first_name}
-                        onChange={v => update(emp.id,"first_name",v)} placeholder="First name" />
-                      <Field label="Last Name" required value={emp.last_name}
-                        onChange={v => update(emp.id,"last_name",v)} placeholder="Last name" />
-                      <Field label="Email" required type="email" value={emp.email}
-                        onChange={v => update(emp.id,"email",v)} placeholder="email@company.com" />
-                      <Field label="Mobile" value={emp.mobile}
-                        onChange={v => update(emp.id,"mobile",v)} placeholder="04xx xxx xxx" />
-                      <SelectField label="Clearance Type" required value={emp.clearance_type}
-                        onChange={v => update(emp.id,"clearance_type",v)} options={CLEARANCE_TYPES} />
-                      <SelectField label="Request Type" required value={emp.clearance_request_type}
-                        onChange={v => update(emp.id,"clearance_request_type",v)} options={REQUEST_TYPES} />
-                    </div>
-                  </div>
-                );
-              })}
+            <div style={{ flex:1, overflowX:"auto", overflowY:"auto" }}>
+              <table style={{ borderCollapse:"collapse" as const, width:"100%", minWidth:880 }}>
+                <thead>
+                  <tr style={{ background:"#0d1018", position:"sticky", top:0, zIndex:10 }}>
+                    <th style={{ width:40, padding:"10px 8px", borderBottom:"2px solid #c9a84c",
+                      borderRight:"1px solid #1f2535", color:"#4a4a52", fontSize:10 }}>#</th>
+                    {COLS.map(c => (
+                      <th key={c.field} style={{ padding:"10px 10px", borderBottom:"2px solid #c9a84c",
+                        borderRight:"1px solid #1f2535", textAlign:"left" as const,
+                        fontSize:10, fontWeight:700, color:"#c9a84c",
+                        textTransform:"uppercase" as const, letterSpacing:"0.1em",
+                        whiteSpace:"nowrap" as const, minWidth:c.w }}>
+                        {c.label}{c.required && <span style={{ color:"#c97a7a" }}> *</span>}
+                      </th>
+                    ))}
+                    <th style={{ width:50, padding:"10px 8px", borderBottom:"2px solid #c9a84c",
+                      color:"#4a4a52", fontSize:10 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employees.map((emp, i) => {
+                    const rowValid = emp.first_name && emp.last_name && emp.email &&
+                                     emp.clearance_type && emp.clearance_request_type;
+                    return (
+                      <tr key={emp.id}
+                        style={{ background:i%2===0?"#111318":"#0f1219",
+                          borderBottom:"1px solid #1f2535" }}>
+                        {/* Row number */}
+                        <td style={{ padding:"6px 8px", borderRight:"1px solid #1f2535",
+                          textAlign:"center" as const, color:rowValid?"#5cb87a":"#4a4a52",
+                          fontSize:11, fontWeight:700 }}>
+                          {rowValid ? "✓" : i+1}
+                        </td>
+                        {/* Input cells */}
+                        {COLS.map(col => (
+                          <td key={col.field} style={{ padding:0, borderRight:"1px solid #1f2535" }}>
+                            {col.type === "select" ? (
+                              <select value={emp[col.field]} onChange={e => update(emp.id, col.field, e.target.value)}
+                                style={{ ...cell, borderRadius:0, border:"none",
+                                  borderBottom:`2px solid ${emp[col.field]?"#c9a84c":"transparent"}`,
+                                  color:emp[col.field]?"#e8e5de":"#4a4a52" }}>
+                                <option value="">Select...</option>
+                                {(col.field==="clearance_type" ? CLEARANCE_TYPES : REQUEST_TYPES).map(o => (
+                                  <option key={o} value={o}>{o}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input type={col.type} value={emp[col.field]}
+                                placeholder={col.placeholder}
+                                onChange={e => update(emp.id, col.field, e.target.value)}
+                                style={{ ...cell, borderRadius:0, border:"none",
+                                  borderBottom:`2px solid ${emp[col.field]?"#c9a84c":"transparent"}` }} />
+                            )}
+                          </td>
+                        ))}
+                        {/* Remove */}
+                        <td style={{ padding:"6px 8px", textAlign:"center" as const }}>
+                          {employees.length > 1 && (
+                            <button onClick={() => remove(emp.id)}
+                              style={{ background:"none", border:"none", color:"#c97a7a",
+                                cursor:"pointer", fontSize:16, padding:"2px 6px",
+                                fontFamily:"inherit", lineHeight:1 }}>✕</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
 
+            {/* Footer */}
             <div style={{ padding:isMobile?"14px 16px":"14px 22px",
-              borderTop:"1px solid #1f2535", flexShrink:0, background:"#111318" }}>
-              <div style={{ fontSize:12, color:"#4a4a52", marginBottom:10 }}>
-                {allValid
-                  ? `${employees.length} employee${employees.length!==1?"s":""} ready to submit`
-                  : "Complete all required fields *"}
+              borderTop:"1px solid #1f2535", flexShrink:0, background:"#111318",
+              display:"flex", justifyContent:"space-between", alignItems:"center", gap:10, flexWrap:"wrap" as const }}>
+              <div style={{ fontSize:12, color:"#4a4a52" }}>
+                {allValid ? `${employees.length} employee${employees.length!==1?"s":""} ready` : "Complete all required fields *"}
               </div>
               <div style={{ display:"flex", gap:10 }}>
                 <button onClick={() => setStep("count")}
-                  style={{ flex:1, background:"none", border:"1px solid #1f2535", color:"#7a7a82",
-                    padding:14, cursor:"pointer", borderRadius:8, fontSize:15,
-                    fontFamily:"inherit", minHeight:50 }}>← Back</button>
+                  style={{ background:"none", border:"1px solid #1f2535", color:"#7a7a82",
+                    padding:"10px 18px", cursor:"pointer", borderRadius:6,
+                    fontSize:13, fontFamily:"inherit" }}>← Back</button>
                 <button onClick={handleSubmit} disabled={!allValid||submitting}
-                  style={{ flex:2, background:allValid?"#c9a84c":"#2a2a32", border:"none",
+                  style={{ background:allValid?"#c9a84c":"#2a2a32", border:"none",
                     color:allValid?"#07070a":"#4a4a52",
-                    padding:14, cursor:allValid?"pointer":"not-allowed",
-                    borderRadius:8, fontSize:15, fontWeight:700,
-                    fontFamily:"inherit", minHeight:50 }}>
+                    padding:"10px 24px", cursor:allValid?"pointer":"not-allowed",
+                    borderRadius:6, fontSize:13, fontWeight:700, fontFamily:"inherit" }}>
                   {submitting ? "Submitting..." : `Submit ${employees.length>1?employees.length+" Employees":"Employee"}`}
                 </button>
               </div>
