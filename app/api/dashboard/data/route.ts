@@ -47,16 +47,13 @@ export async function GET(request: Request) {
       { headers: h }
     );
     const searchData = await safeJson(searchRes);
-    const account = searchData.data?.[0];
+    const searchResult = searchData.data?.[0];
 
-    if (!account) {
+    if (!searchResult) {
       return NextResponse.json({ error: "Invalid account number. Please check and try again." }, { status: 404 });
     }
 
-    const ACCOUNT_ID = account.id;
-    const token = await getToken();
-    const h = { Authorization: `Zoho-oauthtoken ${token}` };
-    const base = "https://www.zohoapis.com.au/crm/v2";
+    const ACCOUNT_ID = searchResult.id;
 
     const [accountRes, dealsRes] = await Promise.all([
       fetch(`${base}/Accounts/${ACCOUNT_ID}`, { headers: h }),
