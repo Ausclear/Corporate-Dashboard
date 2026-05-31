@@ -92,14 +92,15 @@ export async function GET() {
     const APP = 400, SPON = 1460;
 
     const buildNominee = (ne: any) => {
-      let stage = ne.Deal_Stage || "";
+      const stage = ne.Deal_Stage || "";
 
-      /* If no deal stage, check if this nominee exists as a lead */
+      /* If no deal stage, check if this nominee exists as a lead — flag on onboarding_status */
+      let onboardStatus = ne.Onboarding_Status || "";
       if (!stage) {
         const email = (ne.Email || "").toLowerCase().trim();
         const name  = `${ne.First_Name || ""} ${ne.Last_Name || ""}`.trim().toLowerCase();
         const isLead = (email && leadByEmail[email]) || (name && leadByName[name]);
-        stage = isLead ? "Awaiting Application Form" : "";
+        if (isLead) onboardStatus = "Awaiting Application Form";
       }
 
       return {
@@ -110,7 +111,7 @@ export async function GET() {
         clearance_type:         ne.Clearance_Type || "",
         clearance_request_type: ne.Clearance_Request_Type || "New",
         stage,
-        onboarding_status:      ne.Onboarding_Status || "",
+        onboarding_status:      onboardStatus,
         batch_date:             ne.Batch_Date || null,
         linked_deal_name:       ne.Linked_Deal?.name || null,
         employee_number:        ne.Number || null,

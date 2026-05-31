@@ -25,7 +25,6 @@ const SL: Record<string, string> = {
   "Invoice Paid":              "Payment Received",
   "Corporate Approved":        "Active & Approved",
   "Corporate Declined":        "Declined",
-  "Awaiting Application Form":  "Awaiting Application Form",
   "Sponsorship Created":       "Sponsorship Created",
   "Onboard Employee for ESC":  "Commencing Employment Screening",
   "ESC Pending":               "Screening Underway",
@@ -377,10 +376,13 @@ export default function Dashboard() {
                 style={{ display:"flex", gap:14, alignItems:"center", padding:"14px 18px", cursor:"pointer", background:open?C.card2:"transparent" }}
                 onMouseEnter={e => { if(!open)(e.currentTarget as HTMLDivElement).style.background = C.card2; }}
                 onMouseLeave={e => { if(!open)(e.currentTarget as HTMLDivElement).style.background = "transparent"; }}>
-                <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, background:C.gold }} />
+                <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, background:p.onboarding_status==="Awaiting Application Form"?C.amber:p.stage?C.gold:C.dim }} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:14, fontWeight:600, color:C.text }}>{p.employee_name}</div>
-                  <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>{lbl(p.stage) || "—"}</div>
+                  <div style={{ fontSize:11, color:C.muted, marginTop:2, display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                    {lbl(p.stage) || "—"}
+                    {p.onboarding_status==="Awaiting Application Form" && <span style={{ fontSize:9, fontWeight:700, color:C.amber, background:"rgba(212,147,92,0.15)", border:"1px solid rgba(212,147,92,0.35)", padding:"1px 7px", borderRadius:3 }}>AWAITING APPLICATION FORM</span>}
+                  </div>
                 </div>
                 <div style={{ display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
                   <Pill t={t} />

@@ -42,7 +42,6 @@ type Props = { company: Co | undefined; personnel: P[]; batches: Batch[]; isMobi
 
 /* ═══ STAGE MAP ═══ */
 const STAGE_ORD: Record<string, { f: string; o: number }> = {
-  "Awaiting Application Form":  { f: "Awaiting Application Form", o: -1 },
   "Sponsorship Created":       { f: "Sponsorship Created", o: 0 },
   "Onboard Employee for ESC":  { f: "Commencing Screening", o: 1 },
   "ESC Pending":               { f: "Screening Underway", o: 2 },
@@ -540,9 +539,10 @@ export default function AnalyticsTab({ company: co, personnel: ppl, batches: all
                       <span style={{ fontSize: 10, color: done ? C.green : C.sub, fontWeight: 700 }}>{e.pct}%</span>
                     </div>
                     <PBar value={e.pct} max={100} color={done ? C.green : C.blue} h={5} />
-                    <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                    <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                       <Badge text={e.cl} color={CLR_C[e.cl] || C.muted} />
                       <Badge text={e.clearance_request_type || "New"} color={REQ_C[e.clearance_request_type] || C.muted} />
+                      {e.onboarding_status === "Awaiting Application Form" && <Badge text="Awaiting Form" color={C.amber} />}
                     </div>
                     {exp && (
                       <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.line}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 11 }}>
@@ -579,9 +579,10 @@ export default function AnalyticsTab({ company: co, personnel: ppl, batches: all
                         <td style={{ padding: "10px 12px" }}><Badge text={e.clearance_request_type || "New"} color={REQ_C[e.clearance_request_type] || C.muted} /></td>
                         <td style={{ padding: "10px 12px", color: C.muted }}>{e.batch_date || "—"}</td>
                         <td style={{ padding: "10px 12px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: done ? C.green : C.amber, flexShrink: 0 }} />
-                            <span style={{ color: done ? C.green : C.sub, fontSize: 11 }}>{e.friendly}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: done ? C.green : e.onboarding_status === "Awaiting Application Form" ? C.amber : C.amber, flexShrink: 0 }} />
+                            <span style={{ color: done ? C.green : C.sub, fontSize: 11 }}>{e.friendly || "—"}</span>
+                            {e.onboarding_status === "Awaiting Application Form" && <Badge text="Awaiting Form" color={C.amber} />}
                           </div>
                         </td>
                         <td style={{ padding: "10px 12px", minWidth: 120 }}>
