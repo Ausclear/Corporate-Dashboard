@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const CLIENT_ID     = process.env.ZOHO_CLIENT_ID     || "1000.57XM0OOBWZHPCV60VN2ZEC9AV4P80N";
-const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET || "c600ba642721a316b6689da2b3c96230ad6463d7ca";
-const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN || "1000.cc0c290f4c0aebf03439116960721d2f.ba8c1468f101c30a59fc6be744df8dab";
-const ACCOUNT_ID    = "80905000033375002"; // TEST account
+const CLIENT_ID     = process.env.ZOHO_CLIENT_ID     || "";
+const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET || "";
+const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN || "";
 
 async function safeJson(res: Response) {
   const text = await res.text();
@@ -29,8 +28,32 @@ async function getToken(): Promise<string> {
   return data.access_token;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const accountNumber = searchParams.get("account_number");
+
+    if (!accountNumber) {
+      return NextResponse.json({ error: "Account number is required" }, { status: 400 });
+    }
+
+    const token = await getToken();
+    const h = { Authorization: `Zoho-oauthtoken ${token}` };
+    const base = "https://www.zohoapis.com.au/crm/v2";
+
+    /* ── Look up account by Account_Reference_Number ── */
+    const searchRes = await fetch(
+      `${base}/Accounts/search?criteria=(Account_Reference_Number:equals:${encodeURIComponent(accountNumber.toUpperCase().trim())})`,
+      { headers: h }
+    );
+    const searchData = await safeJson(searchRes);
+    const account = searchData.data?.[0];
+
+    if (!account) {
+      return NextResponse.json({ error: "Invalid account number. Please check and try again." }, { status: 404 });
+    }
+
+    const ACCOUNT_ID = account.id;
     const token = await getToken();
     const h = { Authorization: `Zoho-oauthtoken ${token}` };
     const base = "https://www.zohoapis.com.au/crm/v2";

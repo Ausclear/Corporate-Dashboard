@@ -158,11 +158,16 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/dashboard/data").then(r => r.json())
-      .then(d => { if (d.error) setError(d.error); else setData(d); })
+    const acct = sessionStorage.getItem("account_number");
+    if (!acct) { router.push("/login"); return; }
+    fetch(`/api/dashboard/data?account_number=${encodeURIComponent(acct)}`).then(r => r.json())
+      .then(d => {
+        if (d.error) { setError(d.error); sessionStorage.removeItem("account_number"); }
+        else setData(d);
+      })
       .catch(() => setError("Failed to load"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const co      = data?.company;
   const ppl     = data?.personnel || [];
@@ -485,7 +490,7 @@ export default function Dashboard() {
           <img src="https://ausclear.au/AusClear-Dark-Transparent.png" alt="AusClear" style={{ height:32 }} />
           {!isMobile && <><div style={{ width:1, height:20, background:C.line }} /><span style={{ fontSize:13, color:C.muted, fontWeight:500 }}>{co?.company_name || "Corporate Portal"}</span>{co?.account_number && <span style={{ fontSize:11, color:C.dim, fontFamily:"monospace" }}>· {co.account_number}</span>}</>}
         </div>
-        {!isMobile && <button onClick={() => router.push("/logout")} style={{ padding:"6px 16px", border:`1px solid ${C.line}`, background:"transparent", color:C.dim, fontSize:11, cursor:"pointer", borderRadius:4 }}>Sign Out</button>}
+        {!isMobile && <button onClick={() => { sessionStorage.removeItem("account_number"); router.push("/login"); }} style={{ padding:"6px 16px", border:`1px solid ${C.line}`, background:"transparent", color:C.dim, fontSize:11, cursor:"pointer", borderRadius:4 }}>Sign Out</button>}
         {isMobile && (
           <div style={{ position:"relative" }}>
             <button onClick={() => setMenuOpen(o=>!o)} style={{ background:"none", border:`1px solid ${C.line}`, padding:"6px 12px", color:C.muted, cursor:"pointer", fontSize:13 }}>☰</button>
@@ -499,7 +504,7 @@ export default function Dashboard() {
                       {t.label}
                     </button>
                   ))}
-                  <button onClick={() => router.push("/logout")} style={{ display:"block", width:"100%", padding:"12px 18px", border:"none", background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", textAlign:"left" as const }}>Sign Out</button>
+                  <button onClick={() => { sessionStorage.removeItem("account_number"); router.push("/login"); }} style={{ display:"block", width:"100%", padding:"12px 18px", border:"none", background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", textAlign:"left" as const }}>Sign Out</button>
                 </div>
               </>
             )}

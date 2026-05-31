@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, Eye, EyeOff, Shield, CheckCircle, AlertCircle, Smartphone, Copy, Check } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, Shield, CheckCircle, AlertCircle, Smartphone, Copy, Check, FileText } from "lucide-react";
 
 type Step = "register" | "setup-2fa" | "email-confirmation";
 
@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -51,7 +52,8 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     const em = email.toLowerCase().trim();
-    if (!em || !password || !confirmPw) { setError("All fields are required."); return; }
+    const acctNum = accountNumber.toUpperCase().trim();
+    if (!em || !password || !confirmPw || !acctNum) { setError("All fields are required."); return; }
     if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
     if (password !== confirmPw) { setError("Passwords do not match."); return; }
     if (strength.score < 2) { setError("Please choose a stronger password."); return; }
@@ -59,7 +61,7 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: em, password }),
+        body: JSON.stringify({ email: em, password, account_number: acctNum }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -205,6 +207,18 @@ export default function RegisterPage() {
                         className="w-full pl-12 pr-4 py-3.5 bg-portal-input border border-portal-border rounded-xl focus:ring-2 focus:ring-portal-gold-soft focus:border-portal-gold-border outline-none transition-all text-portal-text-primary placeholder:text-portal-text-muted"
                         placeholder="you@company.com.au" autoFocus required />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-portal-gold mb-2">Account Number</label>
+                    <div className="relative">
+                      <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-portal-text-muted" />
+                      <input type="text" value={accountNumber}
+                        onChange={e => setAccountNumber(e.target.value.toUpperCase())}
+                        className="w-full pl-12 pr-4 py-3.5 bg-portal-input border border-portal-border rounded-xl focus:ring-2 focus:ring-portal-gold-soft focus:border-portal-gold-border outline-none transition-all text-portal-text-primary placeholder:text-portal-text-muted font-mono tracking-wider"
+                        placeholder="e.g. TE19166" required />
+                    </div>
+                    <p className="text-xs text-portal-text-muted mt-1.5">Your AusClear account reference number</p>
                   </div>
 
                   <div>
