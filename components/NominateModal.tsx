@@ -57,7 +57,9 @@ function SelectField({ label, value, onChange, options, required=false }:
 export default function NominateModal({ onClose, onSubmit }:
   { onClose:()=>void; onSubmit?:(employees:Employee[])=>void }) {
 
-  const [employees,  setEmployees]  = useState<Employee[]>([blank()]);
+  const [step,       setStep]       = useState<"count"|"form">("count");
+  const [count,      setCount]      = useState(1);
+  const [employees,  setEmployees]  = useState<Employee[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted,  setSubmitted]  = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
@@ -69,11 +71,21 @@ export default function NominateModal({ onClose, onSubmit }:
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  const handleCountConfirm = () => {
+    setEmployees(Array.from({ length: count }, blank));
+    setStep("form");
+  };
+
   const update = (id:string, field:keyof Employee, val:string) =>
     setEmployees(p => p.map(e => e.id===id ? {...e,[field]:val} : e));
-  const remove = (id:string) => setEmployees(p => p.filter(e => e.id!==id));
 
-  const allValid = employees.every(e =>
+  const remove = (id:string) => {
+    const next = employees.filter(e => e.id!==id);
+    setEmployees(next);
+    setCount(next.length);
+  };
+
+  const allValid = employees.length > 0 && employees.every(e =>
     e.first_name && e.last_name && e.email && e.clearance_type && e.clearance_request_type);
 
   const handleSubmit = async () => {
@@ -85,11 +97,9 @@ export default function NominateModal({ onClose, onSubmit }:
     if (onSubmit) onSubmit(employees);
   };
 
-  // Mobile = full-height bottom sheet; Desktop = centred modal
   const shell: React.CSSProperties = isMobile
     ? { position:"fixed", bottom:0, left:0, right:0, top:0,
-        background:"#07070a", zIndex:201,
-        display:"flex", flexDirection:"column" }
+        background:"#07070a", zIndex:201, display:"flex", flexDirection:"column" }
     : { position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
         width:"min(680px,96vw)", maxHeight:"90vh",
         background:"#07070a", border:"1px solid #1f2535", borderRadius:8,
@@ -101,7 +111,7 @@ export default function NominateModal({ onClose, onSubmit }:
       <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:200, backdropFilter:"blur(4px)" }} />
       <div style={shell}>
 
-        {/* Top strip */}
+        {/* Top strip / drag handle */}
         {isMobile
           ? <div style={{ display:"flex", justifyContent:"center", padding:"14px 0 6px", flexShrink:0 }}>
               <div style={{ width:36, height:4, borderRadius:2, background:"#2a2a3a" }} />
@@ -116,7 +126,7 @@ export default function NominateModal({ onClose, onSubmit }:
           <div>
             <div style={{ fontSize:isMobile?20:18, fontWeight:700, color:"#e8e5de" }}>Nominate Employees</div>
             <div style={{ fontSize:13, color:"#7a7a82", marginTop:3 }}>
-              {employees.length} employee{employees.length!==1?"s":""} · required fields marked *
+              {step==="count" ? "How many employees are you nominating?" : `${employees.length} employee${employees.length!==1?"s":""} · required fields marked *`}
             </div>
           </div>
           <button onClick={onClose} style={{ background:"none", border:"1px solid #1f2535",
@@ -138,9 +148,62 @@ export default function NominateModal({ onClose, onSubmit }:
               padding:"14px 36px", color:"#07070a", fontWeight:700, cursor:"pointer",
               borderRadius:8, fontSize:15, fontFamily:"inherit" }}>Done</button>
           </div>
+
+        ) : step === "count" ? (
+          /* ── STEP 1: count picker ── */
+          <div style={{ flex:1, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", padding:"32px 24px" }}>
+            <div style={{ fontSize:14, color:"#7a7a82", marginBottom:24, textAlign:"center" as const }}>
+              Select the number of employees to nominate
+            </div>
+
+            {/* Number stepper */}
+            <div style={{ display:"flex", alignItems:"center", gap:20, marginBottom:40 }}>
+              <button
+                onClick={() => setCount(c => Math.max(1, c-1))}
+                style={{ width:52, height:52, borderRadius:"50%", background:"#161922",
+                  border:"1px solid #1f2535", color:"#e8e5de", fontSize:22,
+                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontFamily:"inherit" }}>−</button>
+              <div style={{ textAlign:"center" as const }}>
+                <div style={{ fontSize:56, fontWeight:700, color:"#c9a84c", lineHeight:1 }}>{count}</div>
+                <div style={{ fontSize:12, color:"#7a7a82", marginTop:4 }}>
+                  employee{count!==1?"s":""}
+                </div>
+              </div>
+              <button
+                onClick={() => setCount(c => Math.min(20, c+1))}
+                style={{ width:52, height:52, borderRadius:"50%", background:"#161922",
+                  border:"1px solid #1f2535", color:"#e8e5de", fontSize:22,
+                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontFamily:"inherit" }}>+</button>
+            </div>
+
+            {/* Quick pick buttons */}
+            <div style={{ display:"flex", gap:10, marginBottom:40, flexWrap:"wrap" as const, justifyContent:"center" }}>
+              {[1,2,3,5,10].map(n => (
+                <button key={n} onClick={() => setCount(n)}
+                  style={{ padding:"8px 18px", borderRadius:6, cursor:"pointer", fontSize:13,
+                    fontFamily:"inherit", fontWeight:count===n?700:400,
+                    background:count===n?"rgba(201,168,76,0.15)":"#161922",
+                    border:`1px solid ${count===n?"#c9a84c":"#1f2535"}`,
+                    color:count===n?"#c9a84c":"#7a7a82" }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={handleCountConfirm}
+              style={{ background:"#c9a84c", border:"none", padding:"14px 48px",
+                color:"#07070a", fontWeight:700, cursor:"pointer", borderRadius:8,
+                fontSize:15, fontFamily:"inherit", width:"100%", maxWidth:320 }}>
+              Continue →
+            </button>
+          </div>
+
         ) : (
+          /* ── STEP 2: employee forms ── */
           <>
-            {/* Scrollable content — flex:1 + overflowY:auto is the correct pattern */}
             <div style={{ flex:1, overflowY:"auto", padding:isMobile?"14px 16px":"16px 22px",
               display:"flex", flexDirection:"column", gap:14 }}>
 
@@ -150,7 +213,6 @@ export default function NominateModal({ onClose, onSubmit }:
                 return (
                   <div key={emp.id} style={{ background:"#161922", border:"1px solid #1f2535",
                     borderRadius:8, overflow:"hidden" }}>
-                    {/* Row header */}
                     <div style={{ padding:"12px 16px", borderBottom:"1px solid #1f2535",
                       display:"flex", justifyContent:"space-between", alignItems:"center",
                       background:"#111318" }}>
@@ -165,7 +227,7 @@ export default function NominateModal({ onClose, onSubmit }:
                           color:emp.first_name||emp.last_name?"#e8e5de":"#7a7a82" }}>
                           {emp.first_name||emp.last_name
                             ? `${emp.first_name} ${emp.last_name}`.trim()
-                            : "New Employee"}
+                            : "Employee Details"}
                         </span>
                         {valid && <span style={{ fontSize:11, color:"#5cb87a",
                           background:"rgba(92,184,122,0.1)", border:"1px solid rgba(92,184,122,0.3)",
@@ -178,7 +240,6 @@ export default function NominateModal({ onClose, onSubmit }:
                             borderRadius:4, fontFamily:"inherit" }}>Remove</button>
                       )}
                     </div>
-                    {/* Fields — single column on mobile */}
                     <div style={{ padding:16, display:"grid",
                       gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:14 }}>
                       <Field label="First Name" required value={emp.first_name}
@@ -197,30 +258,20 @@ export default function NominateModal({ onClose, onSubmit }:
                   </div>
                 );
               })}
-
-              <button onClick={() => setEmployees(p => [...p, blank()])}
-                style={{ background:"none", border:"1px dashed #1f2535", color:"#7a7a82",
-                  padding:16, cursor:"pointer", borderRadius:8, fontSize:14,
-                  fontFamily:"inherit", textAlign:"center" as const }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor="#c9a84c"; (e.currentTarget as HTMLButtonElement).style.color="#c9a84c"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor="#1f2535"; (e.currentTarget as HTMLButtonElement).style.color="#7a7a82"; }}>
-                + Add Another Employee
-              </button>
             </div>
 
-            {/* Sticky footer */}
             <div style={{ padding:isMobile?"14px 16px":"14px 22px",
               borderTop:"1px solid #1f2535", flexShrink:0, background:"#111318" }}>
               <div style={{ fontSize:12, color:"#4a4a52", marginBottom:10 }}>
                 {allValid
-                  ? `${employees.length} employee${employees.length!==1?"s":""} ready`
+                  ? `${employees.length} employee${employees.length!==1?"s":""} ready to submit`
                   : "Complete all required fields *"}
               </div>
               <div style={{ display:"flex", gap:10 }}>
-                <button onClick={onClose}
+                <button onClick={() => setStep("count")}
                   style={{ flex:1, background:"none", border:"1px solid #1f2535", color:"#7a7a82",
                     padding:14, cursor:"pointer", borderRadius:8, fontSize:15,
-                    fontFamily:"inherit", minHeight:50 }}>Cancel</button>
+                    fontFamily:"inherit", minHeight:50 }}>← Back</button>
                 <button onClick={handleSubmit} disabled={!allValid||submitting}
                   style={{ flex:2, background:allValid?"#c9a84c":"#2a2a32", border:"none",
                     color:allValid?"#07070a":"#4a4a52",
