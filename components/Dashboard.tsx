@@ -25,6 +25,7 @@ const SL: Record<string, string> = {
   "Invoice Paid":              "Payment Received",
   "Corporate Approved":        "Active & Approved",
   "Corporate Declined":        "Declined",
+  "Awaiting Application Form":  "Awaiting Application Form",
   "Sponsorship Created":       "Sponsorship Created",
   "Onboard Employee for ESC":  "Commencing Employment Screening",
   "ESC Pending":               "Screening Underway",

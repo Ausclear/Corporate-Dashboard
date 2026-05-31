@@ -48,6 +48,29 @@ export async function GET() {
     const account = accountData.data?.[0];
     if (!account) throw new Error(`Account not found (status: ${accountRes.status}, data: ${JSON.stringify(accountData).substring(0,200)})`);
 
+    /* ── Fetch Leads matching this company ── */
+    const companyName = account.Account_Name || "";
+    let leadRecords: any[] = [];
+    if (companyName) {
+      try {
+        const leadsRes = await fetch(
+          `${base}/Leads/search?criteria=(Company:equals:${encodeURIComponent(companyName)})&fields=First_Name,Last_Name,Email,Company,Lead_Status&per_page=100`,
+          { headers: h }
+        );
+        const leadsData = await safeJson(leadsRes);
+        leadRecords = leadsData.data || [];
+      } catch { /* leads search failed — continue without */ }
+    }
+
+    /* Build a lead lookup by normalised email and name */
+    const leadByEmail: Record<string, any> = {};
+    const leadByName: Record<string, any> = {};
+    leadRecords.forEach((ld: any) => {
+      if (ld.Email) leadByEmail[ld.Email.toLowerCase().trim()] = ld;
+      const fullName = `${ld.First_Name || ""} ${ld.Last_Name || ""}`.trim().toLowerCase();
+      if (fullName) leadByName[fullName] = ld;
+    });;
+
     const allDeals: any[] = dealsData.data || [];
     const nominees: any[] = account.Nominated_Employees || [];
     const corpDeals = allDeals.filter((d: any) => d.Clearance_Type === "Corporate Clearance");
@@ -68,20 +91,32 @@ export async function GET() {
     };
     const APP = 400, SPON = 1460;
 
-    const buildNominee = (ne: any) => ({
-      id:                     ne.id,
-      employee_name:          `${ne.First_Name || ""} ${ne.Last_Name || ""}`.trim(),
-      email:                  ne.Email || "",
-      mobile:                 ne.Mobile || "",
-      clearance_type:         ne.Clearance_Type || "",
-      clearance_request_type: ne.Clearance_Request_Type || "New",
-      stage:                  ne.Deal_Stage || "",
-      onboarding_status:      ne.Onboarding_Status || "",
-      batch_date:             ne.Batch_Date || null,
-      linked_deal_name:       ne.Linked_Deal?.name || null,
-      employee_number:        ne.Number || null,
-      revalidation_date:      null,
-    });
+    const buildNominee = (ne: any) => {
+      let stage = ne.Deal_Stage || "";
+
+      /* If no deal stage, check if this nominee exists as a lead */
+      if (!stage) {
+        const email = (ne.Email || "").toLowerCase().trim();
+        const name  = `${ne.First_Name || ""} ${ne.Last_Name || ""}`.trim().toLowerCase();
+        const isLead = (email && leadByEmail[email]) || (name && leadByName[name]);
+        stage = isLead ? "Awaiting Application Form" : "";
+      }
+
+      return {
+        id:                     ne.id,
+        employee_name:          `${ne.First_Name || ""} ${ne.Last_Name || ""}`.trim(),
+        email:                  ne.Email || "",
+        mobile:                 ne.Mobile || "",
+        clearance_type:         ne.Clearance_Type || "",
+        clearance_request_type: ne.Clearance_Request_Type || "New",
+        stage,
+        onboarding_status:      ne.Onboarding_Status || "",
+        batch_date:             ne.Batch_Date || null,
+        linked_deal_name:       ne.Linked_Deal?.name || null,
+        employee_number:        ne.Number || null,
+        revalidation_date:      null,
+      };
+    };
 
     const batches = corpDeals.map((cd: any, idx: number) => {
       const keys  = Object.keys(batchMap).sort();

@@ -42,6 +42,7 @@ type Props = { company: Co | undefined; personnel: P[]; batches: Batch[]; isMobi
 
 /* ═══ STAGE MAP ═══ */
 const STAGE_ORD: Record<string, { f: string; o: number }> = {
+  "Awaiting Application Form":  { f: "Awaiting Application Form", o: -1 },
   "Sponsorship Created":       { f: "Sponsorship Created", o: 0 },
   "Onboard Employee for ESC":  { f: "Commencing Screening", o: 1 },
   "ESC Pending":               { f: "Screening Underway", o: 2 },
