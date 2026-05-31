@@ -85,10 +85,10 @@ export default function NominateModal({ onClose, onSubmit }: {
     check();
     window.addEventListener("resize", check);
     // Prevent body scroll when modal open
-    document.body.style.overflow = "hidden";
+    // do not block body scroll — breaks iOS modal scroll
     return () => {
       window.removeEventListener("resize", check);
-      document.body.style.overflow = "";
+      
     };
   }, []);
 
@@ -177,7 +177,7 @@ export default function NominateModal({ onClose, onSubmit }: {
           <>
             {/* Scrollable list */}
             <div style={{ flex:1, overflowY:"auto", padding: isMobile ? "14px 16px" : "16px 22px",
-              display:"flex", flexDirection:"column", gap:14, WebkitOverflowScrolling:"touch" as any }}>
+              display:"flex", flexDirection:"column", gap:14, WebkitOverflowScrolling:"touch" as any, overflowY:"scroll" as const }}>
               {employees.map((emp, i) => {
                 const valid = emp.first_name && emp.last_name && emp.email && emp.clearance_type && emp.clearance_request_type;
                 return (
