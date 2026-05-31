@@ -39,7 +39,7 @@ function Field({ label, value, onChange, type = "text", required = false, placeh
           padding:"12px 14px", fontSize:15, borderRadius:6, outline:"none", width:"100%",
           boxSizing:"border-box" as const,
           fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-          WebkitAppearance:"none", appearance:"none" }}
+          }}
         onFocus={e => (e.target as HTMLInputElement).style.borderColor = "#c9a84c"}
         onBlur={e  => (e.target as HTMLInputElement).style.borderColor = "#1f2535"} />
     </div>
@@ -62,7 +62,7 @@ function Select({ label, value, onChange, options, required = false }: {
           padding:"12px 14px", fontSize:15, borderRadius:6, outline:"none", width:"100%",
           boxSizing:"border-box" as const,
           fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-          WebkitAppearance:"none", appearance:"none", cursor:"pointer" }}
+          cursor:"pointer" }}
         onFocus={e => (e.target as HTMLSelectElement).style.borderColor = "#c9a84c"}
         onBlur={e  => (e.target as HTMLSelectElement).style.borderColor = "#1f2535"}>
         <option value="">Select...</option>
