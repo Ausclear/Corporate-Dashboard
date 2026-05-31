@@ -151,9 +151,14 @@ const Card = ({ children, style: s }: { children: React.ReactNode; style?: React
 );
 
 /* ═══ ANALYTICS TAB ═══ */
-export default function AnalyticsTab({ company: co, personnel: ppl, batches, isMobile: mob }: Props) {
+export default function AnalyticsTab({ company: co, personnel: ppl, batches: allBatches, isMobile: mob }: Props) {
   const [subView, setSubView] = useState<"overview" | "financial" | "personnel">("overview");
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
+
+  /* Filter to live batches only — a batch is live when at least one nominee has an active deal stage */
+  const batches = useMemo(() =>
+    allBatches.filter(b => b.nominees.some(n => n.stage && STAGE_ORD[n.stage] !== undefined))
+  , [allBatches]);
 
   /* ── Derived data ── */
   const granted = ppl.filter(e => e.stage === "AGSVA Clearance Granted" || e.stage === "Closed Won").length;
