@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NominateModal from "./NominateModal";
+import AnalyticsTab from "./AnalyticsTab";
 
 const C = {
   bg:    "#07070a", side:  "#0d1018", card:  "#111318", card2: "#161922",
@@ -138,7 +139,7 @@ function Chevrons({ stages, active }: { stages: string[]; active: string }) {
 }
 
 export default function Dashboard() {
-  const [tab, setTab]             = useState<"overview"|"batches"|"personnel"|"financials">("overview");
+  const [tab, setTab]             = useState<"overview"|"batches"|"personnel"|"financials"|"analytics">("overview");
   const [data, setData]           = useState<Data | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
@@ -175,6 +176,7 @@ export default function Dashboard() {
     { key:"batches"    as const, label:"Batches"     },
     { key:"personnel"  as const, label:"Personnel"   },
     { key:"financials" as const, label:"Financials"  },
+    { key:"analytics"  as const, label:"Analytics"   },
   ];
 
   const Overview = () => (
@@ -548,6 +550,7 @@ export default function Dashboard() {
             {tab==="batches"    && <Batches />}
             {tab==="personnel"  && <Personnel />}
             {tab==="financials" && <Financials />}
+            {tab==="analytics"  && <AnalyticsTab company={co} personnel={ppl} batches={batches} isMobile={isMobile} />}
           </main>
         </div>
       </div>
