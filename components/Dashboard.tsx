@@ -315,50 +315,38 @@ export default function Dashboard() {
                 <div style={{ padding:"10px 18px 4px", borderBottom:`1px solid ${C.line}` }}>
                   <div style={{ fontSize:10, color:C.gold, textTransform:"uppercase" as const, letterSpacing:"0.15em", fontWeight:700 }}>Employees in This Batch</div>
                 </div>
-                {batch.nominees.map((p, pi) => {
-                  const eOpen = expandedE === p.id;
-                  const t = clrTag(p.clearance_type);
-                  return (
-                    <div key={p.id} style={{ borderBottom:pi < batch.nominees.length-1 ? `1px solid ${C.line}` : "none" }}>
-                      <div onClick={() => setExpandedE(eOpen ? null : p.id)}
-                        style={{ display:"flex", gap:12, alignItems:"center", padding:"12px 18px", cursor:"pointer" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = C.card2}
-                        onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}>
-                        <div style={{ width:6, height:6, borderRadius:"50%", background:C.gold, flexShrink:0 }} />
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{p.employee_name}</div>
-                          <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>{lbl(p.stage) || "—"}</div>
-                        </div>
-                        <div style={{ display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
-                          <Pill t={t} />
-                          {p.clearance_request_type && <span style={{ fontSize:10, fontWeight:600, color:C.muted, background:"rgba(122,122,130,0.12)", border:`1px solid rgba(122,122,130,0.3)`, padding:"2px 7px", borderRadius:3 }}>{p.clearance_request_type}</span>}
-                          <span style={{ color:C.dim, fontSize:14, display:"inline-block", transform:eOpen?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>›</span>
-                        </div>
-                      </div>
-                      {eOpen && (
-                        <div style={{ background:C.side, borderTop:`1px solid ${C.line}`, padding:"14px 18px 16px 36px" }}>
-                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 28px" }}>
-                            {[
-                              { label:"Email",           value:p.email || "—" },
-                              { label:"Mobile",          value:p.mobile || "—" },
-                              { label:"Clearance Level", value:p.clearance_type || "—" },
-                              { label:"Request Type",    value:p.clearance_request_type || "New" },
-                              { label:"Stage",           value:lbl(p.stage) || "—" },
-                              { label:"Onboarding",      value:lbl(p.onboarding_status) || "—" },
-                              { label:"Submission Date", value:$d(p.batch_date) },
-                              { label:"Revalidation",    value:$d(p.revalidation_date) },
-                            ].map((row, ri) => (
-                              <div key={ri}>
-                                <div style={{ fontSize:9, color:C.gold, textTransform:"uppercase" as const, letterSpacing:"0.12em", fontWeight:700, marginBottom:2 }}>{row.label}</div>
-                                <div style={{ fontSize:12, color:row.value==="—"?C.dim:C.text }}>{row.value}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {/* Horizontal subform table */}
+                <div style={{ overflowX:"auto" }}>
+                  <table style={{ width:"100%", borderCollapse:"collapse" as const }}>
+                    <thead>
+                      <tr style={{ background:C.side }}>
+                        {["Name","Clearance","Request Type","Stage","Onboarding","Submission Date"].map(h => (
+                          <th key={h} style={{ padding:"8px 14px", textAlign:"left" as const, fontSize:10,
+                            fontWeight:700, color:C.gold, textTransform:"uppercase" as const,
+                            letterSpacing:"0.1em", borderBottom:`1px solid ${C.line}`,
+                            whiteSpace:"nowrap" as const }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batch.nominees.map((p, pi) => (
+                        <tr key={p.id}
+                          style={{ borderBottom: pi < batch.nominees.length-1 ? `1px solid ${C.line}` : "none" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = C.card2}
+                          onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}>
+                          <td style={{ padding:"11px 14px", color:C.text, fontWeight:600, whiteSpace:"nowrap" as const }}>{p.employee_name}</td>
+                          <td style={{ padding:"11px 14px", whiteSpace:"nowrap" as const }}><Pill t={clrTag(p.clearance_type)} /></td>
+                          <td style={{ padding:"11px 14px", color:C.muted, whiteSpace:"nowrap" as const }}>{p.clearance_request_type || "New"}</td>
+                          <td style={{ padding:"11px 14px", color:C.muted, whiteSpace:"nowrap" as const }}>{lbl(p.stage) || "—"}</td>
+                          <td style={{ padding:"11px 14px", color:C.muted, whiteSpace:"nowrap" as const }}>{lbl(p.onboarding_status) || "—"}</td>
+                          <td style={{ padding:"11px 14px", color:C.muted, whiteSpace:"nowrap" as const }}>{$d(p.batch_date)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
