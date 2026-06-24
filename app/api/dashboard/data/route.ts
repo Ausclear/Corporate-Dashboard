@@ -41,19 +41,30 @@ export async function GET(request: Request) {
     const h = { Authorization: `Zoho-oauthtoken ${token}` };
     const base = "https://www.zohoapis.com.au/crm/v2";
 
-    /* ── Look up account by Account_Reference_Number ── */
-    const searchRes = await fetch(
-      `${base}/Accounts/search?criteria=(Account_Reference_Number:equals:${encodeURIComponent(accountNumber.toUpperCase().trim())})`,
-      { headers: h }
-    );
-    const searchData = await safeJson(searchRes);
-    const searchResult = searchData.data?.[0];
+    /* ── TEST account bypass ── */
+    const TEST_IDS: Record<string, string> = {
+      "TE19166": "80905000033375002",
+      "TEST":    "80905000033375002",
+    };
+    const upperAcct = accountNumber.toUpperCase().trim();
+    let ACCOUNT_ID: string;
 
-    if (!searchResult) {
-      return NextResponse.json({ error: "Invalid account number. Please check and try again." }, { status: 404 });
+    if (TEST_IDS[upperAcct]) {
+      ACCOUNT_ID = TEST_IDS[upperAcct];
+    } else {
+      /* ── Look up account by Account_Reference_Number ── */
+      const searchRes = await fetch(
+        `${base}/Accounts/search?criteria=(Account_Reference_Number:equals:${encodeURIComponent(upperAcct)})`,
+        { headers: h }
+      );
+      const searchData = await safeJson(searchRes);
+      const searchResult = searchData.data?.[0];
+
+      if (!searchResult) {
+        return NextResponse.json({ error: "Invalid account number. Please check and try again." }, { status: 404 });
+      }
+      ACCOUNT_ID = searchResult.id;
     }
-
-    const ACCOUNT_ID = searchResult.id;
 
     const [accountRes, dealsRes] = await Promise.all([
       fetch(`${base}/Accounts/${ACCOUNT_ID}`, { headers: h }),
