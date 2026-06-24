@@ -37,34 +37,60 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Account number is required" }, { status: 400 });
     }
 
+    const upperAcct = accountNumber.toUpperCase().trim();
+
+    /* ═══ TEST MODE — pure mock data, zero API calls ═══ */
+    if (upperAcct === "TEST" || upperAcct === "TE19166") {
+      const mockPersonnel = [
+        { id:"1", employee_name:"Carl BUGENHAGEN", email:"carl@test.com", mobile:"0400000001", clearance_type:"NV1 Security Clearance", clearance_request_type:"New", stage:"AGSVA Clearance Pending", onboarding_status:"", batch_date:"2025-11", linked_deal_name:"Carl BUGENHAGEN NV1", employee_number:1, revalidation_date:null },
+        { id:"2", employee_name:"Mattias BRADMAN", email:"mattias@test.com", mobile:"0400000002", clearance_type:"NV1 Security Clearance", clearance_request_type:"Upgrade", stage:"ESC Pending", onboarding_status:"", batch_date:"2025-11", linked_deal_name:"Mattias BRADMAN NV1", employee_number:2, revalidation_date:null },
+      ];
+      const mockBatch = {
+        id:"batch_1", deal_name:"TEST – Batch 1", stage:"Corporate Approved",
+        amount:5630, created_time:"2025-11-01T00:00:00+10:30", batch_date:"2025-11",
+        nominee_count:2, baseline_count:0, nv1_count:2, nv2_count:0,
+        upgrade_count:1, new_count:1,
+        agsva_fees:2710, app_fees:800, sponsor_fees:2920,
+        total_fees:6430, ex_agsva:3720,
+        nominees: mockPersonnel,
+      };
+      return NextResponse.json({
+        company: {
+          company_name:"TEST", abn:"00 000 000 000", account_number:"TE19166",
+          email:"test@test.com", phone:"0000000000",
+          total_nominees:2, new_total:1, upgrade_total:1, transfer_total:0,
+          baseline_total:0, nv1_total:2, nv2_total:0,
+          total_agsva_fees:2710, total_application_fees:800, total_sponsorship_fees:2920,
+          total_fees_minus_agsva:3720, total_fees:6430,
+          corp_deal_stage:"Corporate Approved",
+          corp_deal_name:"TEST Corporate Clearance", corp_deal_amount:6430, corp_deal_created:"2025-11-01",
+        },
+        personnel: mockPersonnel,
+        activity: [
+          { id:"a1", event:"Carl BUGENHAGEN — NV1 Security Clearance sponsorship created", event_date:"2025-11-03" },
+          { id:"a2", event:"Mattias BRADMAN — NV1 Security Clearance upgrade created", event_date:"2025-11-03" },
+        ],
+        batches: [mockBatch],
+        user: { email:"test@test.com", display_name:"TEST" },
+      });
+    }
+    /* ═══ END TEST MODE ═══ */
+
+    /* ── Real account: look up via Zoho ── */
     const token = await getToken();
     const h = { Authorization: `Zoho-oauthtoken ${token}` };
     const base = "https://www.zohoapis.com.au/crm/v2";
 
-    /* ── TEST account bypass ── */
-    const TEST_IDS: Record<string, string> = {
-      "TE19166": "80905000033375002",
-      "TEST":    "80905000033375002",
-    };
-    const upperAcct = accountNumber.toUpperCase().trim();
-    let ACCOUNT_ID: string;
-
-    if (TEST_IDS[upperAcct]) {
-      ACCOUNT_ID = TEST_IDS[upperAcct];
-    } else {
-      /* ── Look up account by Account_Reference_Number ── */
-      const searchRes = await fetch(
-        `${base}/Accounts/search?criteria=(Account_Reference_Number:equals:${encodeURIComponent(upperAcct)})`,
-        { headers: h }
-      );
-      const searchData = await safeJson(searchRes);
-      const searchResult = searchData.data?.[0];
-
-      if (!searchResult) {
-        return NextResponse.json({ error: "Invalid account number. Please check and try again." }, { status: 404 });
-      }
-      ACCOUNT_ID = searchResult.id;
+    const searchRes = await fetch(
+      `${base}/Accounts/search?criteria=(Account_Reference_Number:equals:${encodeURIComponent(upperAcct)})`,
+      { headers: h }
+    );
+    const searchData = await safeJson(searchRes);
+    const searchResult = searchData.data?.[0];
+    if (!searchResult) {
+      return NextResponse.json({ error: "Invalid account number." }, { status: 404 });
     }
+    const ACCOUNT_ID = searchResult.id;
 
     const [accountRes, dealsRes] = await Promise.all([
       fetch(`${base}/Accounts/${ACCOUNT_ID}`, { headers: h }),
