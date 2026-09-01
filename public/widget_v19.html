@@ -74,7 +74,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="tst"></div>
 </div>
 <script>
-var API='https://corporateportal.ausclear.au/api/zoho-widget',WK='CorporateConnect_Wk7x9Pn3mQvR2sY8';
+var API='https://corporateportal.ausclear.au/api/zoho-widget',WK='';
 var cid='',cname='',msgs=[],cv='inbox',cf='all',ct=null;
 
 function toast(m){document.getElementById('tst').innerHTML='<div class="toast">'+m+'</div>';setTimeout(function(){document.getElementById('tst').innerHTML='';},3000);}
@@ -230,6 +230,7 @@ function doRefresh(){var b=document.getElementById('rbtn');if(b){b.innerHTML='�
 function restoreMsg(id){api('PATCH',{ids:[id],patch:{deleted_at:null}}).then(function(){toast('Message restored');load().then(inbox);});}
 
 ZOHO.embeddedApp.on('PageLoad',function(data){
+fetch('https://corporateportal.ausclear.au/api/widget-config').then(function(r){return r.json();}).then(function(cfg){WK=cfg.k||'';
 var ent=data.Entity,eid=data.EntityId;
 ZOHO.CRM.API.getRecord({Entity:ent,RecordID:eid}).then(function(record){
 var rec=record.data[0];
@@ -238,6 +239,7 @@ cname=rec.Account_Name||'Unknown';
 if(cid){load().then(inbox);}
 else document.getElementById('view').innerHTML='<div class="empty"><div style="font-size:40px">⚠️</div><strong>No Account Reference Number</strong></div>';
 }).catch(function(){document.getElementById('view').innerHTML='<div class="empty"><div style="font-size:40px">❌</div><strong>Failed to load account</strong></div>';});
+}).catch(function(){document.getElementById('view').innerHTML='<div class="empty"><div style="font-size:40px">❌</div><strong>Widget config error</strong></div>';});
 });
 ZOHO.embeddedApp.init();
 </script>
