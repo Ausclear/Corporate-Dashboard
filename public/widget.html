@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Messages</title>
+    <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f9fb;color:#1a1a2e;height:600px;overflow:hidden}
+        .container{height:600px;display:flex;flex-direction:column}
+        .header{background:#fff;border-bottom:2px solid #c9a84c;color:#1a1a2e;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+        .header h1{font-size:15px;font-weight:700;letter-spacing:.3px}
+        .header h1 span{color:#9a7530}
+        .header .status{font-size:11px;display:flex;align-items:center;gap:6px}
+        .header .dot{width:8px;height:8px;border-radius:50%;background:#5cb87a}
+        .toolbar{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #e2e4e9;background:#fff;flex-wrap:wrap}
+        .toolbar button{padding:5px 12px;border:1px solid #e2e4e9;border-radius:16px;background:#fff;font-size:11px;cursor:pointer;color:#6b6b7b;font-weight:500;transition:all .15s}
+        .toolbar button.active{background:#1a1f2e;color:#9a7530;border-color:#1a1f2e}
+        .toolbar button:hover{border-color:#9a7530}
+        .content{flex:1;overflow-y:auto;padding:0}
+        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#7a7a82;gap:8px}
+        .empty .icon{font-size:40px;opacity:.4}
+        .msg-item{padding:14px 20px;border-bottom:1px solid #f0f0f4;cursor:pointer;transition:background .1s}
+        .msg-item:hover{background:#f4f5f7}
+        .msg-item.unread{background:#f0f4ff;border-left:3px solid #2563b0}
+        .msg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+        .msg-from{font-size:13px;font-weight:600;color:#1a1a2e}
+        .msg-date{font-size:10px;color:#9a9aaa}
+        .msg-subject{font-size:13px;font-weight:500;margin-bottom:3px;color:#2a2a3e}
+        .msg-preview{font-size:11px;color:#7a7a82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .msg-meta{display:flex;gap:8px;margin-top:6px}
+        .badge{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:600}
+        .badge-billing{background:#e8f8ee;color:#2d8a4e}
+        .badge-clearance{background:#faf3e8;color:#9a7530}
+        .badge-nomination{background:#e8f0f8;color:#3a76b0}
+        .badge-general{background:#f0f0f4;color:#6b6b7b}
+        .badge-urgent{background:#fde8e8;color:#c05050}
+        .badge-account{background:#f0e8fa;color:#7c5ab8}
+        .badge-priority{background:#fff3e0;color:#e65100;border:1px solid #ffe0b2}
+        .compose-bar{padding:12px 16px;border-top:1px solid #e2e4e9;background:#fff;display:flex;gap:8px}
+        .compose-bar button{padding:8px 20px;background:#1a1f2e;color:#9a7530;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+        .compose-bar button:hover{background:#1d5a9e}
+        /* Thread view */
+        .thread-header{padding:14px 20px;border-bottom:1px solid #e2e4e9;background:#fff}
+        .thread-header .back{cursor:pointer;color:#2563b0;font-size:12px;font-weight:600;border:none;background:none;margin-bottom:8px}
+        .thread-header h2{font-size:14px;font-weight:700;color:#1a1a2e}
+        .thread-header .meta{font-size:11px;color:#7a7a82;margin-top:4px;display:flex;gap:12px}
+        .thread-msg{padding:16px 20px;border-bottom:1px solid #f0f0f4}
+        .thread-msg .sender{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .thread-msg .avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+        .thread-msg .avatar.admin{background:#e8f0f8;color:#3a76b0}
+        .thread-msg .avatar.client{background:#faf3e8;color:#9a7530}
+        .thread-msg .name{font-size:12px;font-weight:600;color:#1a1a2e}
+        .thread-msg .time{font-size:10px;color:#9a9aaa;margin-left:auto}
+        .thread-msg .body{font-size:12px;line-height:1.7;color:#2a2a3e}
+        .reply-box{padding:14px 20px;border-top:1px solid #e2e4e9;background:#fff}
+        .reply-box textarea{width:100%;border:1px solid #e2e4e9;border-radius:6px;padding:10px;font-size:12px;resize:vertical;font-family:inherit;min-height:60px}
+        .reply-box .actions{display:flex;justify-content:flex-end;margin-top:8px}
+        .reply-box button{padding:8px 20px;background:#1a1f2e;color:#9a7530;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+        /* Compose */
+        .compose-form{padding:20px;flex:1;overflow-y:auto}
+        .compose-form label{display:block;font-size:10px;color:#7a7a82;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:4px}
+        .compose-form input,.compose-form select,.compose-form textarea{width:100%;padding:9px 12px;border:1px solid #e2e4e9;border-radius:6px;font-size:12px;font-family:inherit;color:#1a1a2e;margin-bottom:12px}
+        .compose-form textarea{min-height:100px;resize:vertical}
+        .compose-form .send{padding:10px 28px;background:#1a1f2e;color:#9a7530;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;float:right}
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div class="header">
+        <h1>AusClear <span>Corporate Messages</span></h1>
+        <div class="status"><span class="dot"></span><span id="statusText">Loading...</span></div>
+    </div>
+    <div id="view"></div>
+</div>
+
+<script>
+const API_URL = 'https://corporateportal.ausclear.au/api/zoho-widget';
+const WIDGET_KEY = 'CorporateConnect_Wk7x9Pn3mQvR2sY8';
+let clientId = '';
+let clientName = '';
+let messages = [];
+let currentView = 'inbox';
+let currentFilter = 'all';
+let currentThread = null;
+
+async function api(method, body) {
+    const opts = {
+        method: method,
+        headers: { 'Content-Type': 'application/json', 'x-widget-key': WIDGET_KEY }
+    };
+    if (method === 'GET') {
+        const r = await fetch(API_URL + '?clientId=' + encodeURIComponent(clientId), opts);
+        return r.json();
+    }
+    opts.body = JSON.stringify(body);
+    const r = await fetch(API_URL, opts);
+    return r.json();
+}
+
+function catClass(cat) {
+    if (!cat) return 'badge-general';
+    const c = cat.toLowerCase();
+    if (c.includes('billing')) return 'badge-billing';
+    if (c.includes('clearance')) return 'badge-clearance';
+    if (c.includes('nomination')) return 'badge-nomination';
+    if (c.includes('urgent')) return 'badge-urgent';
+    if (c.includes('account')) return 'badge-account';
+    return 'badge-general';
+}
+
+function fmtDate(d) {
+    try { return new Date(d).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}); } catch { return d; }
+}
+function fmtTime(d) {
+    try { return new Date(d).toLocaleDateString('en-AU', {day:'numeric',month:'short'}) + ' ' + new Date(d).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}); } catch { return d; }
+}
+
+function getThreads() {
+    const roots = messages.filter(m => !m.thread_id);
+    const replies = messages.filter(m => m.thread_id);
+    return roots.map(root => {
+        const reps = replies.filter(r => r.thread_id === root.id).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+        return {
+            ...root,
+            replies: reps,
+            replyCount: reps.length,
+            lastActivity: reps.length ? reps[reps.length-1].created_at : root.created_at,
+            hasUnread: root.from_type === 'corporate' && !root.read_status || reps.some(r => r.from_type === 'corporate' && !r.read_status)
+        };
+    }).sort((a,b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+}
+
+function filterThreads(threads) {
+    if (currentFilter === 'all') return threads;
+    if (currentFilter === 'unread') return threads.filter(t => t.hasUnread);
+    if (currentFilter === 'from_client') return threads.filter(t => t.from_type === 'corporate');
+    if (currentFilter === 'from_admin') return threads.filter(t => t.from_type === 'admin');
+    return threads.filter(t => (t.category||'').toLowerCase().includes(currentFilter));
+}
+
+function renderInbox() {
+    const threads = filterThreads(getThreads());
+    const unread = getThreads().filter(t => t.hasUnread).length;
+    const filters = [
+        {id:'all',label:'All Messages',icon:'📬'},
+        {id:'unread',label:'Unread',icon:'🔵'},
+        {id:'from_client',label:'From Client',icon:'🏢'},
+        {id:'from_admin',label:'From AusClear',icon:'🛡'},
+        {id:'billing',label:'Billing',icon:'💳'},
+        {id:'clearance',label:'Clearance',icon:'🔐'},
+    ];
+
+    let html = '<div class="toolbar">';
+    filters.forEach(f => {
+        html += '<button class="' + (currentFilter===f.id?'active':'') + '" onclick="currentFilter=\'' + f.id + '\';renderInbox()">' + f.icon + ' ' + f.label + '</button>';
+    });
+    html += '</div><div class="content">';
+
+    if (!threads.length) {
+        html += '<div class="empty"><div class="icon">💬</div><strong>No messages found</strong><span>No messages to display for this filter.</span></div>';
+    } else {
+        threads.forEach(t => {
+            const isClient = t.from_type === 'corporate';
+            html += '<div class="msg-item ' + (t.hasUnread?'unread':'') + '" onclick="openThread(\'' + t.id + '\')">';
+            html += '<div class="msg-top"><span class="msg-from">' + (isClient ? clientName : 'AusClear Team') + '</span><span class="msg-date">' + fmtDate(t.lastActivity) + '</span></div>';
+            html += '<div class="msg-subject">' + (t.subject || 'No subject') + '</div>';
+            html += '<div class="msg-preview">' + (t.message||'').substring(0,100) + '</div>';
+            html += '<div class="msg-meta"><span class="badge ' + catClass(t.category) + '">' + (t.category||'General') + '</span>';
+            if (t.priority === 'high' || t.priority === 'urgent') html += '<span class="badge badge-priority">' + t.priority.toUpperCase() + '</span>';
+            if (t.replyCount) html += '<span style="font-size:10px;color:#7a7a82">' + t.replyCount + ' replies</span>';
+            if (t.related_employee) html += '<span style="font-size:10px;color:#7a7a82">👤 ' + t.related_employee + '</span>';
+            html += '</div></div>';
+        });
+    }
+    html += '</div>';
+    html += '<div class="compose-bar"><button onclick="showCompose()">✏️ New Message</button><button onclick="loadMessages()" style="background:transparent;color:#2563b0;border:1px solid #e2e4e9">🔄 Refresh</button></div>';
+    document.getElementById('view').innerHTML = html;
+}
+
+function openThread(id) {
+    currentThread = getThreads().find(t => t.id === id);
+    if (!currentThread) return;
+    currentView = 'thread';
+
+    // Mark unread as read
+    const toRead = [currentThread, ...currentThread.replies].filter(m => m.from_type === 'corporate' && !m.read_status);
+    toRead.forEach(m => {
+        api('PATCH', { ids: [m.id], patch: { read_status: true, read_at: new Date().toISOString() } });
+        m.read_status = true;
+    });
+
+    const all = [currentThread, ...currentThread.replies];
+    let html = '<div class="thread-header"><button class="back" onclick="currentView=\'inbox\';renderInbox()">← Back to inbox</button>';
+    html += '<h2>' + (currentThread.subject || 'No subject') + '</h2>';
+    html += '<div class="meta"><span class="badge ' + catClass(currentThread.category) + '">' + (currentThread.category||'General') + '</span>';
+    if (currentThread.related_employee) html += '<span>👤 ' + currentThread.related_employee + '</span>';
+    html += '<span>' + fmtDate(currentThread.created_at) + '</span>';
+    html += '<span>' + currentThread.replyCount + ' replies</span></div></div>';
+    html += '<div class="content" style="flex:1;overflow-y:auto">';
+
+    all.forEach(m => {
+        const isAdmin = m.from_type === 'admin';
+        const initials = isAdmin ? 'AC' : (clientName||'?').split(' ').map(w=>w[0]).join('').substring(0,2);
+        html += '<div class="thread-msg"><div class="sender">';
+        html += '<div class="avatar ' + (isAdmin?'admin':'client') + '">' + initials + '</div>';
+        html += '<span class="name">' + (m.from_name || (isAdmin ? 'AusClear Team' : clientName)) + '</span>';
+        html += '<span class="time">' + fmtTime(m.created_at) + '</span></div>';
+        html += '<div class="body">' + (m.message||'').replace(/\n/g,'<br>') + '</div></div>';
+    });
+
+    html += '</div>';
+    html += '<div class="reply-box"><textarea id="replyText" placeholder="Type your reply..."></textarea>';
+    html += '<div class="actions"><button onclick="sendReply(\'' + currentThread.id + '\')">Send Reply</button></div></div>';
+    document.getElementById('view').innerHTML = html;
+}
+
+function showCompose() {
+    currentView = 'compose';
+    let html = '<div class="thread-header"><button class="back" onclick="currentView=\'inbox\';renderInbox()">← Back to inbox</button>';
+    html += '<h2>New Message to ' + clientName + '</h2></div>';
+    html += '<div class="compose-form">';
+    html += '<label>Subject</label><input id="cSubject" placeholder="Brief description">';
+    html += '<label>Category</label><select id="cCategory"><option>General enquiry</option><option>Billing</option><option>Clearance query</option><option>Nomination support</option><option>Account update</option><option>Urgent</option></select>';
+    html += '<label>Priority</label><select id="cPriority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select>';
+    html += '<label>Message</label><textarea id="cMessage" placeholder="Type your message..."></textarea>';
+    html += '<button class="send" onclick="sendNew()">Send Message</button>';
+    html += '</div>';
+    document.getElementById('view').innerHTML = html;
+}
+
+async function sendNew() {
+    const subject = document.getElementById('cSubject').value;
+    const message = document.getElementById('cMessage').value;
+    const category = document.getElementById('cCategory').value;
+    const priority = document.getElementById('cPriority').value;
+    if (!subject || !message) { alert('Subject and message are required'); return; }
+
+    const result = await api('POST', {
+        client_id: clientId,
+        from_type: 'admin',
+        from_name: 'AusClear Team',
+        to_name: clientName,
+        subject: subject,
+        message: message,
+        category: category,
+        priority: priority,
+        read_status: false
+    });
+    if (result.ok) {
+        await loadMessages();
+        currentView = 'inbox';
+        renderInbox();
+    } else {
+        alert('Failed to send: ' + (result.error || 'Unknown error'));
+    }
+}
+
+async function sendReply(threadId) {
+    const text = document.getElementById('replyText').value;
+    if (!text.trim()) return;
+
+    const result = await api('POST', {
+        client_id: clientId,
+        from_type: 'admin',
+        from_name: 'AusClear Team',
+        to_name: clientName,
+        subject: currentThread.subject,
+        message: text.trim(),
+        category: currentThread.category,
+        priority: 'normal',
+        thread_id: threadId,
+        read_status: false
+    });
+    if (result.ok) {
+        await loadMessages();
+        openThread(threadId);
+    } else {
+        alert('Failed to send: ' + (result.error || 'Unknown error'));
+    }
+}
+
+async function loadMessages() {
+    try {
+        const data = await api('GET');
+        messages = data.messages || [];
+        document.getElementById('statusText').textContent = clientName + ' · ' + clientId;
+    } catch (e) {
+        document.getElementById('statusText').textContent = 'Error loading';
+    }
+}
+
+// Init
+ZOHO.embeddedApp.on('PageLoad', async function(data) {
+    const entity = data.Entity;
+    const entityId = data.EntityId;
+
+    try {
+        const record = await ZOHO.CRM.API.getRecord({ Entity: entity, RecordID: entityId });
+        const rec = record.data[0];
+        clientId = rec.Account_Reference_Number || '';
+        clientName = rec.Account_Name || 'Unknown';
+    } catch (e) {
+        clientId = '';
+        clientName = 'Unknown';
+    }
+
+    if (clientId) {
+        await loadMessages();
+        renderInbox();
+    } else {
+        document.getElementById('view').innerHTML = '<div class="empty"><div class="icon">⚠️</div><strong>No Account Reference Number</strong><span>This account does not have a reference number set.</span></div>';
+    }
+});
+
+ZOHO.embeddedApp.init();
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Corporate Messages</title>
+<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f5f7;color:#1a1a2e;height:600px;overflow:hidden}
+.ctr{height:600px;display:flex;flex-direction:column}
+.hdr{background:#fff;border-bottom:2px solid #c9a84c;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+.hdr h1{font-size:15px;font-weight:700;color:#1a1a2e}
+.hdr h1 span{color:#9a7530}
+.hdr .st{font-size:11px;color:#7a7a82;display:flex;align-items:center;gap:6px}
+.hdr .dot{width:8px;height:8px;border-radius:50%;background:#5cb87a}
+.ubadge{background:#2563b0;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;margin-left:8px}
+.tb{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #e2e4e9;background:#fff;flex-wrap:wrap}
+.tb button{padding:5px 14px;border:1px solid #e2e4e9;border-radius:20px;background:#fff;font-size:11px;cursor:pointer;color:#6b6b7b;font-weight:500}
+.tb button:hover{border-color:#2563b0}
+.tb button.on{background:#2563b0;color:#fff;border-color:#2563b0}
+.ct{flex:1;overflow-y:auto}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#7a7a82;gap:8px}
+.mi{padding:14px 20px;border-bottom:1px solid #eef0f4;cursor:pointer}
+.mi:hover{background:#f8f9fb}
+.mi.ur{background:#eef4ff;border-left:3px solid #2563b0}
+.mi.ur .ms{font-weight:700}
+.mt{display:flex;justify-content:space-between;margin-bottom:3px}
+.mf{font-size:13px;font-weight:600}.md{font-size:10px;color:#9a9aaa}
+.ms{font-size:13px;font-weight:500;margin-bottom:3px}
+.mp{font-size:11px;color:#7a7a82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mm{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.bg{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:600}
+.bg-bi{background:#e8f8ee;color:#2d8a4e}.bg-cl{background:#faf3e8;color:#9a7530}
+.bg-no{background:#e8f0f8;color:#3a76b0}.bg-ge{background:#f0f0f4;color:#6b6b7b}
+.bg-ur{background:#fde8e8;color:#c05050}.bg-hi{background:#fff3e0;color:#e65100;border:1px solid #ffe0b2}
+.bg-rp{background:#e8f8ee;color:#2d8a4e;border:1px solid #c8e8c8}
+.bg-aw{background:#fff8e0;color:#9a7530;border:1px solid #f0e0b0}
+.bb{padding:12px 16px;border-top:1px solid #e2e4e9;background:#fff;display:flex;gap:8px;align-items:center}
+.btn{padding:9px 20px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.bp{background:#2563b0;color:#fff;border:none}.bp:hover{background:#1d5a9e}
+.bs{background:#fff;color:#2563b0;border:1px solid #d0d8e4}.bs:hover{background:#f0f4ff}
+.th{padding:16px 20px;border-bottom:1px solid #e2e4e9;background:#fff}
+.th .bk{cursor:pointer;color:#2563b0;font-size:12px;font-weight:600;border:none;background:none;margin-bottom:10px}
+.th h2{font-size:15px;font-weight:700}
+.th .me{font-size:11px;color:#7a7a82;margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tm{padding:16px 20px;margin:8px 16px;border-radius:8px;border-bottom:none}
+.tm.admin{background:#eef4ff;border-left:3px solid #2563b0}
+.tm.client{background:#faf8f0;border-left:3px solid #c9a84c}
+.tm .sn{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.av.a{background:#e8f0f8;color:#2563b0}.av.c{background:#faf3e8;color:#9a7530}
+.tm .nm{font-size:13px;font-weight:600}.tm .rl{font-size:10px;color:#9a9aaa}
+.tm .ti{font-size:10px;color:#9a9aaa;margin-left:auto}
+.tm .dl{border:none;background:transparent;color:#c05050;cursor:pointer;font-size:12px;padding:2px 4px}
+.tm .dl:hover{color:#e05050}
+.tm .bd{font-size:13px;line-height:1.8;color:#2a2a3e;padding-left:42px}
+.rb{padding:16px 20px;border-top:1px solid #e2e4e9;background:#fff}
+.rb textarea{width:100%;border:1px solid #e2e4e9;border-radius:8px;padding:12px;font-size:13px;resize:vertical;font-family:inherit;min-height:70px;color:#1a1a2e}
+.rb textarea:focus{outline:none;border-color:#2563b0}
+.cf{padding:20px;flex:1;overflow-y:auto}
+.cf label{display:block;font-size:10px;color:#7a7a82;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:5px}
+.cf input,.cf select,.cf textarea{width:100%;padding:10px 14px;border:1px solid #e2e4e9;border-radius:8px;font-size:13px;font-family:inherit;color:#1a1a2e;margin-bottom:14px}
+.cf textarea{min-height:120px;resize:vertical}
+.cf .rw{display:flex;gap:12px}
+.cf .rw>div{flex:1}
+.toast{position:fixed;top:12px;right:12px;background:#2d8a4e;color:#fff;padding:12px 20px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:999;animation:si .3s ease}
+@keyframes si{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="ctr" id="app">
+<div class="hdr"><div style="display:flex;align-items:center"><h1>AusClear <span>Corporate Messages</span></h1><span class="ubadge" id="ub" style="display:none"></span></div><div class="st"><span class="dot"></span><span id="stxt">Loading...</span></div></div>
+<div id="view"></div>
+<div id="tst"></div>
+</div>
+<script>
+var API='https://corporateportal.ausclear.au/api/zoho-widget',WK='CorporateConnect_Wk7x9Pn3mQvR2sY8';
+var cid='',cname='',msgs=[],cv='inbox',cf='all',ct=null;
+
+function toast(m){document.getElementById('tst').innerHTML='<div class="toast">'+m+'</div>';setTimeout(function(){document.getElementById('tst').innerHTML='';},3000);}
+
+function api(method,body){
+var o={method:method,headers:{'Content-Type':'application/json','x-widget-key':WK}};
+if(method==='GET')return fetch(API+'?clientId='+encodeURIComponent(cid)+'&_t='+Date.now()+'&_t='+Date.now(),o).then(function(r){return r.json();});
+o.body=JSON.stringify(body);return fetch(API,o).then(function(r){return r.json();});
+}
+
+function cc(c){if(!c)return'bg-ge';c=c.toLowerCase();if(c.indexOf('billing')>=0)return'bg-bi';if(c.indexOf('clearance')>=0)return'bg-cl';if(c.indexOf('nomination')>=0)return'bg-no';if(c.indexOf('urgent')>=0)return'bg-ur';return'bg-ge';}
+function fd(d){try{return new Date(d).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});}catch(e){return d;}}
+function ft(d){try{return new Date(d).toLocaleDateString('en-AU',{day:'numeric',month:'short'})+', '+new Date(d).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});}catch(e){return d;}}
+
+function threads(){
+var roots=msgs.filter(function(m){return!m.thread_id;}),reps=msgs.filter(function(m){return m.thread_id;});
+return roots.map(function(r){
+var rs=reps.filter(function(x){return x.thread_id===r.id;}).sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);});
+var lr=rs.length?rs[rs.length-1]:null,ar=rs.some(function(x){return x.from_type==='admin';});
+return{id:r.id,ft:r.from_type,fn:r.from_name,su:r.subject,msg:r.message,cat:r.category,pri:r.priority,re:r.related_employee,ca:r.created_at,rs:r.read_status,reps:rs,rc:rs.length,la:lr?lr.created_at:r.created_at,hu:(r.from_type==='corporate'&&!r.read_status)||rs.some(function(x){return x.from_type==='corporate'&&!x.read_status;}),rp:r.from_type==='corporate'&&ar,aw:r.from_type==='corporate'&&!ar};
+}).sort(function(a,b){return new Date(b.la)-new Date(a.la);});
+}
+
+function ub(){var c=threads().filter(function(t){return t.hu;}).length;var e=document.getElementById('ub');if(c>0){e.textContent=c+' unread';e.style.display='inline';}else e.style.display='none';}
+
+function filt(ts){
+if(cf==='all')return ts;if(cf==='unread')return ts.filter(function(t){return t.hu;});
+if(cf==='from_client')return ts.filter(function(t){return t.ft==='corporate';});
+if(cf==='from_admin')return ts.filter(function(t){return t.ft==='admin';});
+if(cf==='bin'){var del=msgs.filter(function(m){return m.deleted_at;});return del.map(function(m){return{id:m.id,ft:m.from_type,fn:m.from_name,su:m.subject,msg:m.message,cat:m.category,pri:m.priority,re:m.related_employee,ca:m.created_at,rs:true,reps:[],rc:0,la:m.created_at,hu:false,rp:false,aw:false,del:true};});}return ts.filter(function(t){return(t.cat||'').toLowerCase().indexOf(cf)>=0;});
+}
+
+function inbox(){
+cv='inbox';var all=threads(),ts=filt(all);ub();
+var fs=[{id:'all',l:'All',i:'📬'},{id:'unread',l:'Unread',i:'🔵'},{id:'from_client',l:'From Client',i:'🏢'},{id:'from_admin',l:'From AusClear',i:'🛡'},{id:'billing',l:'Billing',i:'💳'},{id:'clearance',l:'Clearance',i:'🔐'},{id:'bin',l:'Bin',i:'🗑'}];
+var h='<div class="tb">';fs.forEach(function(f){h+='<button class="'+(cf===f.id?'on':'')+'" onclick="cf=\''+f.id+'\';inbox()">'+f.i+' '+f.l+'</button>';});
+h+='</div><div class="ct">';
+if(!ts.length)h+='<div class="empty"><div style="font-size:40px;opacity:.3">💬</div><strong>No messages found</strong></div>';
+else ts.forEach(function(t){
+var ic=t.ft==='corporate';
+h+='<div class="mi '+(t.hu?'ur':'')+'" onclick="ot(\''+t.id+'\')">';
+h+='<div class="mt"><span class="mf">'+(ic?cname:'AusClear Team')+'</span><span class="md">'+fd(t.la)+'</span></div>';
+h+='<div class="ms">'+(t.su||'No subject')+'</div>';
+h+='<div class="mp">'+(t.msg||'').substring(0,120)+'</div>';
+h+='<div class="mm"><span class="bg '+cc(t.cat)+'">'+(t.cat||'General')+'</span>';
+if(t.pri==='high'||t.pri==='urgent')h+='<span class="bg bg-hi">'+t.pri.toUpperCase()+'</span>';
+if(t.rp)h+='<span class="bg bg-rp">✓ Replied</span>';
+if(t.aw)h+='<span class="bg bg-aw">⏳ Awaiting</span>';
+if(t.rc)h+='<span style="font-size:10px;color:#7a7a82">💬 '+t.rc+'</span>';
+if(t.re)h+='<span style="font-size:10px;color:#7a7a82">👤 '+t.re+'</span>';if(t.del)h+='<button style="margin-left:auto;padding:3px 10px;border:1px solid rgba(45,138,78,0.3);background:transparent;border-radius:4px;color:#2d8a4e;font-size:10px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();restoreMsg(\''+t.id+'\')">&cularr; Restore</button>';
+h+='</div></div>';
+});
+h+='</div><div class="bb"><button class="btn bp" onclick="compose()">✏️ New Message</button>';
+h+='<button class="btn bs" id="rbtn" onclick="doRefresh()">🔄 Refresh</button>';
+h+='<span style="margin-left:auto;font-size:11px;color:#9a9aaa">'+all.length+' message'+(all.length!==1?'s':'')+'</span></div>';
+document.getElementById('view').innerHTML=h;
+}
+
+function ot(id){
+ct=threads().find(function(t){return t.id===id;});if(!ct)return;cv='thread';
+var tr=[ct].concat(ct.reps).filter(function(m){return m.from_type==='corporate'&&!(m.rs||m.read_status);});
+tr.forEach(function(m){api('PATCH',{ids:[m.id],patch:{read_status:true,read_at:new Date().toISOString()}});m.read_status=true;m.rs=true;});
+ub();
+var all=[{id:ct.id,ft:ct.ft,fn:ct.fn,msg:ct.msg,ca:ct.ca}].concat(ct.reps.map(function(r){return{id:r.id,ft:r.from_type,fn:r.from_name,msg:r.message,ca:r.created_at};}));
+var h='<div class="th"><button class="bk" onclick="cv=\'inbox\';inbox()">← Back to inbox</button>';
+h+='<h2>'+(ct.su||'No subject')+'</h2>';
+h+='<div class="me"><span class="bg '+cc(ct.cat)+'">'+(ct.cat||'General')+'</span>';
+if(ct.rp)h+='<span class="bg bg-rp">✓ Replied</span>';
+if(ct.aw)h+='<span class="bg bg-aw">⏳ Awaiting</span>';
+if(ct.re)h+='<span>👤 '+ct.re+'</span>';
+h+='<span>📅 '+fd(ct.ca)+'</span><span>💬 '+ct.rc+'</span>';
+h+='<span style="margin-left:auto"><button style="padding:4px 10px;border:1px solid #fde8e8;background:transparent;border-radius:5px;color:#c05050;font-size:10px;cursor:pointer" onclick="delThread(\''+ct.id+'\')">🗑 Delete thread</button></span>';
+h+='</div></div><div class="ct" style="flex:1;overflow-y:auto">';
+all.forEach(function(m){
+var ia=m.ft==='admin';
+var sn=m.fn||(ia?'AusClear Team':cname);var ini=ia?'AC':sn.split(' ').map(function(w){return w[0];}).join('').substring(0,2);
+h+='<div class="tm '+(ia?'admin':'client')+'"><div class="sn">';
+h+='<div class="av '+(ia?'a':'c')+'">'+ini+'</div>';
+h+='<div><div class="nm">'+(m.fn||(ia?'AusClear Team':cname))+'</div><div class="rl">'+(ia?'AusClear':cname)+'</div></div>';
+h+='<span class="ti">'+ft(m.ca)+'</span>';
+h+='<button class="dl" onclick="delOne(\''+m.id+'\',\''+ct.id+'\')" title="Delete">🗑</button>';
+h+='</div><div class="bd">'+(m.msg||'').replace(/\n/g,'<br>')+'</div></div>';
+});
+h+='</div><div class="rb"><textarea id="rtxt" placeholder="Type your reply to '+cname+'..."></textarea>';
+h+='<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn bp" onclick="reply(\''+ct.id+'\')">Send Reply</button></div></div>';
+document.getElementById('view').innerHTML=h;
+}
+
+function compose(){
+cv='compose';
+var h='<div class="th"><button class="bk" onclick="cv=\'inbox\';inbox()">← Back to inbox</button><h2>New Message to '+cname+'</h2></div>';
+h+='<div class="cf"><div><label>Subject</label><input id="cS" placeholder="Brief description"></div>';
+h+='<div class="rw"><div><label>Category</label><select id="cC"><option>General enquiry</option><option>Billing</option><option>Clearance query</option><option>Nomination support</option><option>Account update</option><option>Urgent</option></select></div>';
+h+='<div><label>Priority</label><select id="cP"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div></div>';
+h+='<div><label>Message</label><textarea id="cM" placeholder="Type your message..."></textarea></div>';
+h+='<div style="display:flex;justify-content:flex-end"><button class="btn bp" style="padding:11px 28px;font-size:13px" onclick="sendNew()">Send Message</button></div></div>';
+document.getElementById('view').innerHTML=h;
+}
+
+function sendNew(){
+var s=document.getElementById('cS').value,m=document.getElementById('cM').value;
+var c=document.getElementById('cC').value,p=document.getElementById('cP').value;
+if(!s||!m){toast('Subject and message required');return;}
+api('POST',{client_id:cid,from_type:'admin',from_name:'AusClear Team',to_name:cname,subject:s,message:m,category:c,priority:p,read_status:false}).then(function(r){
+if(r.ok){toast('Message sent to '+cname);load().then(inbox);}else toast('Failed: '+(r.error||''));
+});
+}
+
+function reply(tid){
+var t=document.getElementById('rtxt').value;if(!t.trim())return;
+api('POST',{client_id:cid,from_type:'admin',from_name:'AusClear Team',to_name:cname,subject:ct.su,message:t.trim(),category:ct.cat,priority:'normal',thread_id:tid,read_status:false}).then(function(r){
+if(r.ok){toast('Reply sent');load().then(function(){ot(tid);});}else toast('Failed');
+});
+}
+
+function delThread(id){
+if(!confirm('Delete this thread and all replies?'))return;
+api('PATCH',{ids:[id],patch:{deleted_at:new Date().toISOString()}});
+var reps=msgs.filter(function(m){return m.thread_id===id;});
+reps.forEach(function(r){api('PATCH',{ids:[r.id],patch:{deleted_at:new Date().toISOString()}});});
+toast('Thread deleted');load().then(inbox);
+}
+
+function delOne(mid,tid){
+api('PATCH',{ids:[mid],patch:{deleted_at:new Date().toISOString()}}).then(function(){
+toast('Message deleted');load().then(function(){
+var t=threads().find(function(x){return x.id===tid;});
+if(t)ot(tid);else inbox();
+});
+});
+}
+
+function doRefresh(){
+var b=document.getElementById('rbtn');
+if(b){b.innerHTML='⏳ Loading...';b.disabled=true;b.style.opacity='0.6';}
+load().then(function(){
+inbox();
+if(b){b.innerHTML='✅ Updated';b.style.opacity='1';}
+setTimeout(function(){if(b){b.innerHTML='🔄 Refresh';b.disabled=false;}},1500);
+});
+}
+
+function load(){
+return api('GET').then(function(d){
+msgs=d.messages||[];
+document.getElementById('stxt').textContent=cname+' · '+cid;
+ub();
+}).catch(function(){document.getElementById('stxt').textContent='Connection error';});
+}
+
+function doRefresh(){var b=document.getElementById('rbtn');if(b){b.innerHTML='⏳ Loading...';b.disabled=true;b.style.opacity='0.6';}load().then(function(){inbox();if(b){b.innerHTML='✅ Updated';b.style.opacity='1';}setTimeout(function(){if(b){b.innerHTML='🔄 Refresh';b.disabled=false;}},1500);});}
+
+function restoreMsg(id){api('PATCH',{ids:[id],patch:{deleted_at:null}}).then(function(){toast('Message restored');load().then(inbox);});}
+
+ZOHO.embeddedApp.on('PageLoad',function(data){
+var ent=data.Entity,eid=data.EntityId;
+ZOHO.CRM.API.getRecord({Entity:ent,RecordID:eid}).then(function(record){
+var rec=record.data[0];
+cid=rec.Account_Reference_Number||'';
+cname=rec.Account_Name||'Unknown';
+if(cid){load().then(inbox);}
+else document.getElementById('view').innerHTML='<div class="empty"><div style="font-size:40px">⚠️</div><strong>No Account Reference Number</strong></div>';
+}).catch(function(){document.getElementById('view').innerHTML='<div class="empty"><div style="font-size:40px">❌</div><strong>Failed to load account</strong></div>';});
+});
+ZOHO.embeddedApp.init();
+</script>
+</body>
+</html>

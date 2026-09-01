@@ -1,0 +1,586 @@
+import { useState, useEffect } from "react";
+
+const GOLD = "#c9a84c";
+const GOLD_DIM = "rgba(201,168,76,0.15)";
+const GOLD_BORDER = "rgba(201,168,76,0.25)";
+const BG = "#07070a";
+const CARD = "#202028";
+const INPUT = "#16161c";
+const TEXT = "#e8e6e1";
+const TEXT2 = "#9a9898";
+const MUTED = "#6b6969";
+const BORDER = "rgba(255,255,255,0.06)";
+const GREEN = "#27ae60";
+const GREEN_DIM = "rgba(39,174,96,0.12)";
+const AMBER = "#e67e22";
+const AMBER_DIM = "rgba(230,126,34,0.12)";
+const RED = "#c0392b";
+const RED_DIM = "rgba(192,57,43,0.12)";
+
+const COMPANY = {
+  name: "Sentinel Defence Solutions",
+  abn: "45 123 456 789",
+  clientRef: "CORP-2024-0047",
+  contractStart: "15 Mar 2024",
+  contractExpiry: "14 Mar 2025",
+  status: "Active",
+  sponsorshipTier: "Enterprise",
+  totalSponsored: 24,
+  activeBaseline: 8,
+  activeNV1: 12,
+  activeNV2: 4,
+  pendingApplications: 3,
+  monthlySpend: "$4,860",
+};
+
+const PERSONNEL = [
+  { id: 1, name: "Sarah Mitchell", clearance: "NV2", status: "Active", expiry: "22 Nov 2038", role: "Program Director" },
+  { id: 2, name: "David Chen", clearance: "NV1", status: "Active", expiry: "08 Jun 2036", role: "Systems Engineer" },
+  { id: 3, name: "Emma Thompson", clearance: "NV1", status: "Active", expiry: "14 Jan 2037", role: "Project Manager" },
+  { id: 4, name: "Michael O'Brien", clearance: "Baseline", status: "Active", expiry: "30 Sep 2039", role: "IT Support" },
+  { id: 5, name: "Jessica Nguyen", clearance: "NV1", status: "Pending", expiry: "—", role: "Analyst" },
+  { id: 6, name: "Andrew Walker", clearance: "NV2", status: "Active", expiry: "03 Apr 2035", role: "Operations Lead" },
+  { id: 7, name: "Rachel Kim", clearance: "Baseline", status: "Active", expiry: "19 Aug 2040", role: "Admin Officer" },
+  { id: 8, name: "Thomas Brown", clearance: "NV1", status: "Renewal", expiry: "28 Feb 2026", role: "Security Consultant" },
+  { id: 9, name: "Lisa Patel", clearance: "Baseline", status: "Active", expiry: "11 Dec 2039", role: "Finance Officer" },
+  { id: 10, name: "James Wright", clearance: "NV1", status: "Pending", expiry: "—", role: "Contract Manager" },
+];
+
+const ACTIVITY = [
+  { date: "12 Apr 2026", event: "NV1 application submitted for Jessica Nguyen", type: "application" },
+  { date: "11 Apr 2026", event: "NV1 application submitted for James Wright", type: "application" },
+  { date: "10 Apr 2026", event: "Clearance granted — David Chen (NV1)", type: "granted" },
+  { date: "08 Apr 2026", event: "Renewal notice sent — Thomas Brown (NV1)", type: "renewal" },
+  { date: "05 Apr 2026", event: "Security briefing completed — Andrew Walker", type: "application" },
+  { date: "01 Apr 2026", event: "Monthly invoice generated — $4,860.00", type: "invoice" },
+  { date: "28 Mar 2026", event: "New nomination received — Lisa Patel (Baseline)", type: "application" },
+  { date: "25 Mar 2026", event: "Clearance renewed — Sarah Mitchell (NV2)", type: "granted" },
+];
+
+const INVOICES = [
+  { id: "INV-2026-04", date: "01 Apr 2026", amount: "$4,860.00", status: "Due", due: "30 Apr 2026" },
+  { id: "INV-2026-03", date: "01 Mar 2026", amount: "$4,620.00", status: "Paid", due: "31 Mar 2026" },
+  { id: "INV-2026-02", date: "01 Feb 2026", amount: "$4,620.00", status: "Paid", due: "28 Feb 2026" },
+  { id: "INV-2026-01", date: "01 Jan 2026", amount: "$4,380.00", status: "Paid", due: "31 Jan 2026" },
+];
+
+const Icons = {
+  dashboard: (c = MUTED) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+  personnel: (c = MUTED) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  activity: (c = MUTED) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  invoices: (c = MUTED) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+  support: (c = MUTED) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  search: (c = MUTED) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  logout: (c = MUTED) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+};
+
+const clearanceColour = (c) => c === "NV2" ? GOLD : c === "NV1" ? "#7eb8da" : TEXT2;
+const statusColour = (s) => s === "Active" ? GREEN : s === "Pending" ? AMBER : s === "Renewal" ? "#9b59b6" : RED;
+const statusBg = (s) => s === "Active" ? GREEN_DIM : s === "Pending" ? AMBER_DIM : s === "Renewal" ? "rgba(155,89,182,0.12)" : RED_DIM;
+const activityIcon = (t) => t === "granted" ? GREEN : t === "application" ? GOLD : t === "renewal" ? AMBER : TEXT2;
+
+function Badge({ text, colour, bg }) {
+  return (
+    <span style={{
+      display: "inline-block", fontSize: 10, fontWeight: 700,
+      textTransform: "uppercase", letterSpacing: "1px",
+      color: colour, background: bg,
+      padding: "3px 10px", borderRadius: 20, whiteSpace: "nowrap",
+    }}>{text}</span>
+  );
+}
+
+const NAV_ITEMS = [
+  { key: "dashboard", label: "Dashboard", icon: Icons.dashboard },
+  { key: "personnel", label: "Personnel", icon: Icons.personnel },
+  { key: "activity", label: "Activity", icon: Icons.activity },
+  { key: "invoices", label: "Invoices", icon: Icons.invoices },
+  { key: "support", label: "Support", icon: Icons.support },
+];
+
+export default function AusClearCorporateDashboard() {
+  const [page, setPage] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [personnelFilter, setPersonnelFilter] = useState("All");
+  const [showLogout, setShowLogout] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const filteredPersonnel = PERSONNEL.filter(p => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q);
+    const matchesFilter = personnelFilter === "All" || p.clearance === personnelFilter || p.status === personnelFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  /* ───── DASHBOARD ───── */
+  const renderDashboard = () => (
+    <div>
+      {/* Company header */}
+      <div style={{
+        background: CARD, borderRadius: 14, padding: isMobile ? "20px 16px 18px" : "28px 28px 24px",
+        border: `1px solid ${BORDER}`, position: "relative", overflow: "hidden", marginBottom: 16,
+      }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 18 : 22, color: TEXT, fontWeight: 700, margin: 0 }}>
+              {COMPANY.name}
+            </h2>
+            <div style={{ fontSize: 12, color: TEXT2, marginTop: 6, wordBreak: "break-word" }}>
+              ABN {COMPANY.abn} &nbsp;·&nbsp; Ref: <span style={{ color: GOLD, fontFamily: "monospace", fontWeight: 700 }}>{COMPANY.clientRef}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <Badge text="Active" colour={GREEN} bg={GREEN_DIM} />
+            <Badge text={COMPANY.sponsorshipTier} colour={GOLD} bg={GOLD_DIM} />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 12, marginTop: 14, fontSize: 12, color: TEXT2, flexWrap: "wrap" }}>
+          <span>Contract: {COMPANY.contractStart} — {COMPANY.contractExpiry}</span>
+          <span style={{ color: MUTED }}>|</span>
+          <span>Monthly: <span style={{ color: GOLD, fontWeight: 700 }}>{COMPANY.monthlySpend}</span></span>
+        </div>
+        <button style={{
+          background: `linear-gradient(135deg, ${GOLD}, #b8942e)`,
+          border: "none", borderRadius: 8, padding: "10px 20px",
+          color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginTop: 16,
+        }}>+ Nominate Personnel</button>
+      </div>
+
+      {/* Stats */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
+        gap: 10, marginBottom: 16,
+      }}>
+        {[
+          { label: "Total", value: COMPANY.totalSponsored, accent: GOLD },
+          { label: "Baseline", value: COMPANY.activeBaseline, accent: TEXT2 },
+          { label: "NV1", value: COMPANY.activeNV1, accent: "#7eb8da" },
+          { label: "NV2", value: COMPANY.activeNV2, accent: GOLD },
+          { label: "Pending", value: COMPANY.pendingApplications, accent: AMBER },
+        ].map((s, i) => (
+          <div key={i} style={{
+            background: CARD, borderRadius: 12, padding: "16px 14px",
+            border: `1px solid ${BORDER}`, position: "relative", overflow: "hidden",
+            gridColumn: isMobile && i === 4 ? "1 / -1" : undefined,
+          }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: s.accent }} />
+            <div style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 700, color: TEXT, lineHeight: 1.1 }}>{s.value}</div>
+            <div style={{ fontSize: 10, color: TEXT2, marginTop: 4, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 600 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Clearance distribution */}
+      <div style={{
+        background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`,
+        padding: isMobile ? "16px" : "22px 24px", marginBottom: 16,
+      }}>
+        <h3 style={{ fontFamily: "Georgia, serif", fontSize: 15, color: TEXT, margin: "0 0 12px", fontWeight: 700 }}>Clearance Distribution</h3>
+        <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", height: 28 }}>
+          {[
+            { pct: (COMPANY.activeBaseline / COMPANY.totalSponsored) * 100, label: "BL", bg: TEXT2 },
+            { pct: (COMPANY.activeNV1 / COMPANY.totalSponsored) * 100, label: "NV1", bg: "#7eb8da" },
+            { pct: (COMPANY.activeNV2 / COMPANY.totalSponsored) * 100, label: "NV2", bg: GOLD },
+          ].map((b, i) => (
+            <div key={i} style={{ width: `${b.pct}%`, background: b.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: BG }}>{b.label}</div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+          {[
+            { label: "Baseline", count: COMPANY.activeBaseline, colour: TEXT2 },
+            { label: "NV1", count: COMPANY.activeNV1, colour: "#7eb8da" },
+            { label: "NV2", count: COMPANY.activeNV2, colour: GOLD },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 3, background: item.colour }} />
+              <span style={{ fontSize: 12, color: TEXT2 }}>{item.label}: <span style={{ color: TEXT, fontWeight: 600 }}>{item.count}</span></span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div style={{
+        background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`,
+        padding: isMobile ? "16px" : "22px 24px",
+      }}>
+        <h3 style={{ fontFamily: "Georgia, serif", fontSize: 15, color: TEXT, margin: "0 0 14px", fontWeight: 700 }}>Recent Activity</h3>
+        {ACTIVITY.slice(0, 6).map((a, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "flex-start", gap: 10,
+            padding: "10px 0",
+            borderBottom: i < 5 ? `1px solid ${BORDER}` : "none",
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: activityIcon(a.type), marginTop: 5, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.4 }}>{a.event}</div>
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{a.date}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  /* ───── PERSONNEL ───── */
+  const renderPersonnel = () => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+        <h2 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 18 : 20, color: TEXT, margin: 0, fontWeight: 700 }}>Sponsored Personnel</h2>
+        <button style={{
+          background: `linear-gradient(135deg, ${GOLD}, #b8942e)`,
+          border: "none", borderRadius: 8, padding: "10px 18px",
+          color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+        }}>+ Nominate</button>
+      </div>
+
+      {/* Search */}
+      <div style={{ position: "relative", marginBottom: 10 }}>
+        <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>{Icons.search(MUTED)}</div>
+        <input
+          type="text" placeholder="Search personnel..."
+          value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+          style={{
+            width: "100%", background: INPUT, border: `1px solid ${BORDER}`,
+            borderRadius: 8, padding: "10px 14px 10px 40px",
+            color: TEXT, fontSize: 13, outline: "none", fontFamily: "inherit",
+          }}
+          onFocus={e => e.target.style.borderColor = GOLD_BORDER}
+          onBlur={e => e.target.style.borderColor = BORDER}
+        />
+      </div>
+
+      {/* Filters — horizontal scroll on mobile */}
+      <div className="filter-scroll" style={{
+        display: "flex", gap: 6, marginBottom: 14,
+        overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 4,
+      }}>
+        {["All", "Baseline", "NV1", "NV2", "Active", "Pending", "Renewal"].map(f => (
+          <button key={f} onClick={() => setPersonnelFilter(f)} style={{
+            background: personnelFilter === f ? GOLD_DIM : INPUT,
+            border: `1px solid ${personnelFilter === f ? GOLD_BORDER : BORDER}`,
+            borderRadius: 8, padding: "8px 14px",
+            color: personnelFilter === f ? GOLD : TEXT2,
+            fontSize: 11, fontWeight: 600, cursor: "pointer",
+            fontFamily: "inherit", textTransform: "uppercase", letterSpacing: "0.5px",
+            whiteSpace: "nowrap", flexShrink: 0,
+          }}>{f}</button>
+        ))}
+      </div>
+
+      {/* Mobile: cards / Desktop: table */}
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {filteredPersonnel.map(p => (
+            <div key={p.id} style={{
+              background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`,
+              padding: "16px", position: "relative", overflow: "hidden",
+            }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: clearanceColour(p.clearance) }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                <div>
+                  <div style={{ fontSize: 14, color: TEXT, fontWeight: 700 }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>{p.role}</div>
+                </div>
+                <Badge text={p.status} colour={statusColour(p.status)} bg={statusBg(p.status)} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: clearanceColour(p.clearance), fontWeight: 700 }}>{p.clearance}</span>
+                <span style={{ fontSize: 11, color: MUTED, fontFamily: "monospace" }}>Exp: {p.expiry}</span>
+              </div>
+            </div>
+          ))}
+          {filteredPersonnel.length === 0 && (
+            <div style={{ padding: 40, textAlign: "center", color: MUTED, fontSize: 13 }}>No personnel match your search.</div>
+          )}
+        </div>
+      ) : (
+        <div style={{ background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+          <div style={{
+            display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1.2fr 1fr",
+            padding: "14px 22px", borderBottom: `1px solid ${BORDER}`,
+            fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", color: MUTED,
+          }}>
+            <span>Name</span><span>Clearance</span><span>Status</span><span>Role</span><span>Expiry</span>
+          </div>
+          {filteredPersonnel.map((p, i) => (
+            <div key={p.id} style={{
+              display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1.2fr 1fr",
+              padding: "14px 22px", borderBottom: i < filteredPersonnel.length - 1 ? `1px solid ${BORDER}` : "none",
+              alignItems: "center", cursor: "pointer",
+            }}>
+              <span style={{ fontSize: 13, color: TEXT, fontWeight: 600 }}>{p.name}</span>
+              <span style={{ fontSize: 12, color: clearanceColour(p.clearance), fontWeight: 700 }}>{p.clearance}</span>
+              <span><Badge text={p.status} colour={statusColour(p.status)} bg={statusBg(p.status)} /></span>
+              <span style={{ fontSize: 12, color: TEXT2 }}>{p.role}</span>
+              <span style={{ fontSize: 12, color: p.expiry === "—" ? MUTED : TEXT2, fontFamily: "monospace" }}>{p.expiry}</span>
+            </div>
+          ))}
+          {filteredPersonnel.length === 0 && (
+            <div style={{ padding: 40, textAlign: "center", color: MUTED, fontSize: 13 }}>No personnel match your search.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  /* ───── ACTIVITY ───── */
+  const renderActivity = () => (
+    <div>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 18 : 20, color: TEXT, margin: "0 0 14px", fontWeight: 700 }}>Activity Log</h2>
+      <div style={{ background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+        {ACTIVITY.map((a, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "flex-start", gap: 12,
+            padding: isMobile ? "14px 16px" : "16px 24px",
+            borderBottom: i < ACTIVITY.length - 1 ? `1px solid ${BORDER}` : "none",
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+              background: `${activityIcon(a.type)}15`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: activityIcon(a.type) }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.4 }}>{a.event}</div>
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{a.date}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  /* ───── INVOICES ───── */
+  const renderInvoices = () => (
+    <div>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 18 : 20, color: TEXT, margin: "0 0 14px", fontWeight: 700 }}>Invoices</h2>
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {INVOICES.map(inv => (
+            <div key={inv.id} style={{
+              background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: "16px",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 13, color: GOLD, fontWeight: 700, fontFamily: "monospace" }}>{inv.id}</span>
+                <Badge text={inv.status} colour={inv.status === "Paid" ? GREEN : AMBER} bg={inv.status === "Paid" ? GREEN_DIM : AMBER_DIM} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <span style={{ color: TEXT, fontWeight: 700 }}>{inv.amount}</span>
+                <span style={{ color: MUTED, fontSize: 12 }}>{inv.date}</span>
+              </div>
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Due: {inv.due}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
+            padding: "14px 22px", borderBottom: `1px solid ${BORDER}`,
+            fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", color: MUTED,
+          }}>
+            <span>Invoice</span><span>Date</span><span>Amount</span><span>Status</span><span>Due</span>
+          </div>
+          {INVOICES.map((inv, i) => (
+            <div key={inv.id} style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
+              padding: "16px 22px", borderBottom: i < INVOICES.length - 1 ? `1px solid ${BORDER}` : "none",
+              alignItems: "center",
+            }}>
+              <span style={{ fontSize: 13, color: GOLD, fontWeight: 700, fontFamily: "monospace" }}>{inv.id}</span>
+              <span style={{ fontSize: 12, color: TEXT2 }}>{inv.date}</span>
+              <span style={{ fontSize: 13, color: TEXT, fontWeight: 700 }}>{inv.amount}</span>
+              <span><Badge text={inv.status} colour={inv.status === "Paid" ? GREEN : AMBER} bg={inv.status === "Paid" ? GREEN_DIM : AMBER_DIM} /></span>
+              <span style={{ fontSize: 12, color: TEXT2 }}>{inv.due}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  /* ───── SUPPORT ───── */
+  const renderSupport = () => (
+    <div>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 18 : 20, color: TEXT, margin: "0 0 6px", fontWeight: 700 }}>Support</h2>
+      <p style={{ fontSize: 13, color: TEXT2, margin: "0 0 14px" }}>Get in touch with your AusClear account team.</p>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
+        <div style={{ background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`, padding: isMobile ? "20px 16px" : "28px 24px" }}>
+          <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, color: TEXT, margin: "0 0 14px", fontWeight: 700 }}>Contact Details</h3>
+          {[
+            { label: "Phone", value: "1300 027 423" },
+            { label: "Email", value: "support@ausclear.com.au" },
+            { label: "Hours", value: "Mon — Fri, 9am — 5pm ACST" },
+            { label: "Address", value: "82 Onkaparinga Valley Road, Woodside SA 5244" },
+          ].map((item, i) => (
+            <div key={i} style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "1.5px", color: GOLD, fontWeight: 700, marginBottom: 3 }}>{item.label}</div>
+              <div style={{ fontSize: 13, color: TEXT }}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: CARD, borderRadius: 14, border: `1px solid ${BORDER}`, padding: isMobile ? "20px 16px" : "28px 24px" }}>
+          <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, color: TEXT, margin: "0 0 14px", fontWeight: 700 }}>Knowledge Base</h3>
+          <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: "0 0 20px" }}>
+            Browse our library of 120+ articles covering security clearances, AGSVA processes, DISP requirements, and more.
+          </p>
+          <button style={{
+            background: `linear-gradient(135deg, ${GOLD}, #b8942e)`,
+            border: "none", borderRadius: 8, padding: "12px 22px",
+            color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+          }}>Visit Knowledge Base</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const content = {
+    dashboard: renderDashboard,
+    personnel: renderPersonnel,
+    activity: renderActivity,
+    invoices: renderInvoices,
+    support: renderSupport,
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: BG, color: TEXT,
+      fontFamily: "'DM Sans', -apple-system, sans-serif", fontSize: 14,
+      overflowX: "hidden",
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+      {/* Sidebar overlay */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 99,
+      }} />}
+
+      {/* Sidebar */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, bottom: 0,
+        width: 240, background: CARD, zIndex: 100,
+        borderRight: `1px solid ${BORDER}`,
+        display: "flex", flexDirection: "column",
+        transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1)",
+        overflowY: "auto",
+      }}>
+        <div style={{ padding: "24px 20px 20px", borderBottom: `1px solid ${BORDER}` }}>
+          <img src="https://ausclear.au/AusClear-Light-Transparent.png" alt="AusClear" style={{ height: 28 }} />
+          <div style={{ fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "2px", fontWeight: 700, marginTop: 6 }}>Corporate Portal</div>
+        </div>
+        <nav style={{ flex: 1, padding: "12px 10px" }}>
+          {NAV_ITEMS.map(item => {
+            const active = page === item.key;
+            return (
+              <button key={item.key} onClick={() => { setPage(item.key); setSidebarOpen(false); }} style={{
+                display: "flex", alignItems: "center", gap: 12, width: "100%",
+                padding: "12px 14px", borderRadius: 10, border: "none",
+                background: active ? GOLD_DIM : "transparent",
+                color: active ? GOLD : TEXT2, fontSize: 13, fontWeight: active ? 700 : 500,
+                cursor: "pointer", fontFamily: "inherit", textAlign: "left", marginBottom: 2,
+              }}>
+                {item.icon(active ? GOLD : MUTED)}
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+        <div style={{ padding: "12px 10px 20px", borderTop: `1px solid ${BORDER}` }}>
+          <button onClick={() => { setShowLogout(true); setSidebarOpen(false); }} style={{
+            display: "flex", alignItems: "center", gap: 12, width: "100%",
+            padding: "12px 14px", borderRadius: 10, border: "none",
+            background: "transparent", color: TEXT2, fontSize: 13,
+            cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+          }}>
+            {Icons.logout(MUTED)} Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Top bar */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 50,
+        background: `${CARD}ee`, backdropFilter: "blur(16px)",
+        borderBottom: `1px solid ${BORDER}`,
+        padding: "0 16px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEXT2} strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 15, color: TEXT, fontWeight: 700 }}>
+            {NAV_ITEMS.find(n => n.key === page)?.label || "Dashboard"}
+          </span>
+        </div>
+        <div style={{
+          width: 32, height: 32, borderRadius: "50%",
+          background: GOLD_DIM, border: `1px solid ${GOLD_BORDER}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 12, fontWeight: 700, color: GOLD, fontFamily: "Georgia, serif",
+        }}>SD</div>
+      </div>
+
+      {/* Main content */}
+      <main style={{
+        padding: isMobile ? "16px 12px 80px" : "24px 24px 60px",
+        maxWidth: 1100, margin: "0 auto",
+      }}>
+        {content[page]?.()}
+      </main>
+
+      {/* Logout modal */}
+      {showLogout && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16,
+        }} onClick={e => e.target === e.currentTarget && setShowLogout(false)}>
+          <div style={{
+            background: CARD, borderRadius: 16, width: "100%", maxWidth: 340, overflow: "hidden",
+            border: `1px solid ${BORDER}`,
+          }}>
+            <div style={{ padding: "24px 24px 16px" }}>
+              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 17, color: TEXT, margin: "0 0 8px" }}>Sign Out</h3>
+              <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: 0 }}>This will end your current session.</p>
+            </div>
+            <div style={{ display: "flex", gap: 10, padding: "0 24px 24px" }}>
+              <button onClick={() => setShowLogout(false)} style={{
+                flex: 1, padding: "12px", background: INPUT, border: `1px solid ${BORDER}`,
+                borderRadius: 10, color: TEXT2, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+              }}>Cancel</button>
+              <button onClick={() => setShowLogout(false)} style={{
+                flex: 1, padding: "12px", background: `linear-gradient(135deg, ${GOLD}, #b8942e)`,
+                border: "none", borderRadius: 10, color: BG, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+              }}>Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+        .filter-scroll::-webkit-scrollbar { display: none; }
+        .filter-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        ::-webkit-scrollbar { width: 4px; height: 0; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${BORDER}; border-radius: 2px; }
+        input::placeholder { color: ${MUTED}; }
+      `}</style>
+    </div>
+  );
+}
