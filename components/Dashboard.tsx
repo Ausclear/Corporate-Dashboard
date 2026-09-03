@@ -200,7 +200,9 @@ export default function Dashboard() {
     const acct = sessionStorage.getItem("account_number");
     if (acct) {
       const key = `ausclear_welcomed_${acct}`;
-      if (!localStorage.getItem(key)) setShowWelcome(true);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("welcome") === "1") { localStorage.removeItem(key); setShowWelcome(true); window.history.replaceState({}, "", window.location.pathname); }
+      else if (!localStorage.getItem(key)) setShowWelcome(true);
     }
   }, []);
   const [data, setData]           = useState<Data | null>(null);
