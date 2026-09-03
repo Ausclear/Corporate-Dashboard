@@ -50,7 +50,7 @@ export default function MaintenancePage() {
         </div>
 
         <div style={{ marginTop:20 }}>
-          <a href="/login" style={{ color:"#2563b0", textDecoration:"none", fontSize:12, fontWeight:500 }}>← Try signing in again</a>
+          <a href="/login" onClick={e => { e.preventDefault(); fetch("/api/admin/maintenance-check").then(r=>r.json()).then(d=>{ if(d.active) window.location.reload(); else window.location.href="/login"; }).catch(()=>window.location.reload()); }} style={{ color:"#2563b0", textDecoration:"none", fontSize:12, fontWeight:500, cursor:"pointer" }}>← Try signing in again</a>
         </div>
 
         <div style={{ marginTop:24 }}>
