@@ -1691,7 +1691,7 @@ export default function Dashboard() {
                     { icon:"👥", label:"Personnel", desc:"Track your sponsored staff", tab:"personnel" as const },
                     { icon:"📊", label:"Analytics", desc:"Clearance progress insights", tab:"analytics" as const },
                     { icon:"💰", label:"Financials", desc:"Invoices & payments", tab:"financials" as const },
-                    { icon:"✉️", label:"Messages", desc:"Contact your account team", tab:"messages" as const },
+                    { icon:"✉️", label:"Messages", desc:"Contact your account management team", tab:"messages" as const },
                   ].map((q,i) => (
                     <button key={i} onClick={() => setTab(q.tab)}
                       style={{ flex:"1 1 120px", background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)", border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", textAlign:"left" as const, transition:"all 0.2s" }}
