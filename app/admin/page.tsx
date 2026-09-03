@@ -98,12 +98,12 @@ export default function AdminPage() {
         <div style={{ marginBottom:16 }}>
           <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:600 }}>Email</label>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="off"
-            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" }} />
+            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:"#1a1a2e", fontSize:14, outline:"none", boxSizing:"border-box", WebkitTextFillColor:"#1a1a2e" }} />
         </div>
         <div style={{ marginBottom:20 }}>
           <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:600 }}>Password</label>
           <input value={password} onChange={e => setPassword(e.target.value)} type="password"
-            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" }} />
+            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:"#1a1a2e", fontSize:14, outline:"none", boxSizing:"border-box", WebkitTextFillColor:"#1a1a2e" }} />
         </div>
         {error && <div style={{ background:"rgba(201,90,90,0.1)", border:"1px solid rgba(201,90,90,0.3)", borderRadius:8, padding:"8px 12px", marginBottom:14, color:C.red, fontSize:12 }}>⚠ {error}</div>}
         <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"linear-gradient(135deg, #c05050, #9a3535)", border:"none", borderRadius:8, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>
