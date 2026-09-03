@@ -180,7 +180,7 @@ export default function AdminPage() {
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           {maintenance && <span style={{ fontSize:10, fontWeight:700, color:"#c05050", background:"rgba(201,90,90,0.1)", border:"1px solid rgba(201,90,90,0.3)", padding:"4px 12px", borderRadius:4, textTransform:"uppercase", letterSpacing:"0.1em" }}>🔒 Maintenance Mode</span>}
-          <button onClick={() => { sessionStorage.removeItem("admin_token"); setAuthed(false); }}
+          <button onClick={() => { sessionStorage.removeItem("admin_token"); window.location.href = "/admin/logout"; }}
             style={{ background:"none", border:`1px solid rgba(201,90,90,0.3)`, padding:"6px 14px", borderRadius:6, color:C.red, fontSize:11, fontWeight:600, cursor:"pointer" }}>Sign Out</button>
         </div>
       </div>
