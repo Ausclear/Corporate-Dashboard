@@ -125,7 +125,7 @@ export default function AdminPage() {
     blue: "#3a76b0", amber: "#d4935c",
   };
 
-  if (checking) return <div style={{ minHeight:"100vh", background:"#f4f5f7" }} />;
+  if (checking) return null;
 
   if (!authed) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg, #f0f2f5, #e8ecf0)", fontFamily:"'Segoe UI',sans-serif" }}>
