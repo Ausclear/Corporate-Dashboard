@@ -117,8 +117,8 @@ export default function ForgotPinPage() {
               </div>
 
               <div style={{ marginBottom:20 }}>
-                <label style={{ display:"block", fontSize:10, color:C.label, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.14em", fontWeight:600 }}>Billing Email</label>
-                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="your@company.com" type="email" autoComplete="off"
+                <label style={{ display:"block", fontSize:10, color:C.label, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.14em", fontWeight:600 }}>Contact Email</label>
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="As registered with AusClear" type="email" autoComplete="off"
                   style={{ width:"100%", padding:"13px 16px", background:C.input, border:`1px solid ${C.inputBorder}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box", transition:"border 0.2s", WebkitTextFillColor:C.text }}
                   onFocus={e => e.target.style.borderColor = C.inputFocus} onBlur={e => e.target.style.borderColor = C.inputBorder} />
               </div>

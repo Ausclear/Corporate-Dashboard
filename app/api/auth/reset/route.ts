@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       const searchText = await searchRes.text();
       if (!searchText.trim()) return NextResponse.json({ error: "Verification failed" }, { status: 401 });
       const account = JSON.parse(searchText).data?.[0];
-      const billingEmail = (account?.Billing_Email || "").toLowerCase().trim();
+      const billingEmail = (account?.Account_Email || "").toLowerCase().trim();
       if (billingEmail !== emailLower) {
         return NextResponse.json({ error: "The email address does not match our records for this account." }, { status: 401 });
       }
