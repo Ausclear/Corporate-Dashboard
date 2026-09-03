@@ -96,9 +96,9 @@ export default function RegisterPage() {
           {success ? (
             <div style={{ textAlign:"center", padding:"20px 0" }}>
               <div style={{ width:56, height:56, borderRadius:"50%", background:C.greenBg, border:`1px solid ${C.greenBorder}`, display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:24, marginBottom:16, color:C.green }}>✓</div>
-              <h2 style={{ fontSize:18, fontWeight:700, color:C.text, marginBottom:8 }}>Registration Complete</h2>
-              <p style={{ fontSize:13, color:C.muted, marginBottom:4 }}>Your account <span style={{ color:C.gold, fontFamily:"monospace", fontWeight:700 }}>{acct.toUpperCase()}</span> is ready.</p>
-              <p style={{ fontSize:12, color:C.muted }}>Redirecting to sign in...</p>
+              <h2 style={{ fontSize:18, fontWeight:700, color:C.text, marginBottom:8 }}>Registration Submitted</h2>
+              <p style={{ fontSize:13, color:C.muted, marginBottom:4 }}>Your account <span style={{ color:C.gold, fontFamily:"monospace", fontWeight:700 }}>{acct.toUpperCase()}</span> is pending approval.</p>
+              <p style={{ fontSize:12, color:C.muted }}>AusClear will review and approve your registration shortly.</p>
             </div>
           ) : (
             <>

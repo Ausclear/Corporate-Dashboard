@@ -43,7 +43,21 @@ export async function POST(request: Request) {
     }
     /* If no cache exists, skip name check — PIN still validates */
 
-    /* 2. Verify PIN via Supabase function */
+    /* 2. Check account status — block pending/deactivated */
+    try {
+      const statusRes = await fetch(
+        `${SUPA_URL}/rest/v1/corporate_users?account_number=eq.${encodeURIComponent(acct)}&select=status&limit=1`,
+        { headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}` } }
+      );
+      const statusRows = await statusRes.json();
+      if (Array.isArray(statusRows) && statusRows.length > 0) {
+        const status = statusRows[0].status || "approved";
+        if (status === "pending") return NextResponse.json({ error: "Your registration is pending approval by AusClear. Please check back later." }, { status: 403 });
+        if (status === "deactivated") return NextResponse.json({ error: "This account has been deactivated. Contact support@ausclear.com.au for assistance." }, { status: 403 });
+      }
+    } catch {}
+
+    /* 3. Verify PIN via Supabase function */
     const verifyRes = await fetch(`${SUPA_URL}/rest/v1/rpc/verify_corporate_pin`, {
       method: "POST",
       headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}`, "Content-Type": "application/json" },

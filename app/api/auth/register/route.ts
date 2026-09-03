@@ -61,7 +61,21 @@ export async function POST(request: Request) {
     });
     const regResult = await regRes.json();
 
-    if (regResult === true) return NextResponse.json({ ok: true, message: "Registration successful. You can now sign in." });
+    if (regResult === true) {
+      // Set status to pending approval
+      await fetch(`${SUPA_URL}/rest/v1/corporate_users?account_number=eq.${encodeURIComponent(acct)}`, {
+        method: "PATCH",
+        headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ status: "pending", registered_at: new Date().toISOString() }),
+      });
+      // Log to audit
+      await fetch(`${SUPA_URL}/rest/v1/admin_audit_log`, {
+        method: "POST",
+        headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ event_type: "registration", account_number: acct, details: `New registration: ${acct} (${companyName})` }),
+      });
+      return NextResponse.json({ ok: true, message: "Registration submitted. Your account is pending approval by AusClear. You will be notified once approved." });
+    }
     return NextResponse.json({ error: "Registration failed. Please try again." }, { status: 500 });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Registration failed" }, { status: 500 });
