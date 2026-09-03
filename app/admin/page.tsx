@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
@@ -102,8 +103,14 @@ export default function AdminPage() {
         </div>
         <div style={{ marginBottom:20 }}>
           <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:600 }}>Password</label>
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password"
-            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:"#1a1a2e", fontSize:14, outline:"none", boxSizing:"border-box", WebkitTextFillColor:"#1a1a2e" }} />
+          <div style={{ position:"relative" as const }}>
+            <input value={password} onChange={e => setPassword(e.target.value)} type={showPw ? "text" : "password"}
+              style={{ width:"100%", padding:"12px 42px 12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:"#1a1a2e", fontSize:14, outline:"none", boxSizing:"border-box", WebkitTextFillColor:"#1a1a2e" }} />
+            <button type="button" onClick={() => setShowPw(!showPw)}
+              style={{ position:"absolute" as const, right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:C.muted, padding:4 }}>
+              {showPw ? "🙈" : "👁"}
+            </button>
+          </div>
         </div>
         {error && <div style={{ background:"rgba(201,90,90,0.1)", border:"1px solid rgba(201,90,90,0.3)", borderRadius:8, padding:"8px 12px", marginBottom:14, color:C.red, fontSize:12 }}>⚠ {error}</div>}
         <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"linear-gradient(135deg, #c05050, #9a3535)", border:"none", borderRadius:8, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>
