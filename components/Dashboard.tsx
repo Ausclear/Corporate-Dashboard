@@ -194,17 +194,7 @@ function Chevrons({ stages, active, dark = true }: { stages: string[]; active: s
 
 export default function Dashboard() {
   const [tab, setTab]             = useState<"overview"|"batches"|"personnel"|"financials"|"analytics"|"messages"|"account"|"settings">("overview");
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  useEffect(() => {
-    const acct = sessionStorage.getItem("account_number");
-    if (acct) {
-      const key = `ausclear_welcomed_${acct}`;
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("welcome") === "1") { localStorage.removeItem(key); setShowWelcome(true); window.history.replaceState({}, "", window.location.pathname); }
-      else if (!localStorage.getItem(key)) setShowWelcome(true);
-    }
-  }, []);
+  const [showWelcome, setShowWelcome] = useState(true);
   const [data, setData]           = useState<Data | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
