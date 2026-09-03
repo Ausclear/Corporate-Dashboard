@@ -568,10 +568,15 @@ export default function Dashboard() {
                     <tbody>
                       {batch.nominees.map((p, pi) => (
                         <tr key={p.id}
-                          style={{ borderBottom: pi < batch.nominees.length-1 ? `1px solid ${C.line}` : "none" }}
+                          style={{ borderBottom: pi < batch.nominees.length-1 ? `1px solid ${C.line}` : "none", transition:"background 0.15s" }}
                           onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = C.card2}
                           onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}>
-                          <td style={{ padding:"11px 14px", color:C.text, fontWeight:600, whiteSpace:"nowrap" as const }}>{p.employee_name}</td>
+                          <td style={{ padding:"11px 14px", whiteSpace:"nowrap" as const }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                              <div style={{ width:28, height:28, borderRadius:"50%", background:isDark?"rgba(201,168,76,0.1)":"rgba(37,99,176,0.08)", border:`1px solid ${isDark?"rgba(201,168,76,0.2)":"rgba(37,99,176,0.15)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:C.gold, flexShrink:0 }}>{p.employee_name.split(" ").map((w:string)=>w[0]).join("").slice(0,2)}</div>
+                              <span style={{ color:C.text, fontWeight:600 }}>{p.employee_name}</span>
+                            </div>
+                          </td>
                           <td style={{ padding:"11px 14px", whiteSpace:"nowrap" as const }}><Pill t={clrTag(p.clearance_type)} /></td>
                           <td style={{ padding:"11px 14px", color:C.muted, whiteSpace:"nowrap" as const }}>{p.clearance_request_type || "New"}</td>
                           <td style={{ padding:"11px 14px", color:C.muted, whiteSpace:"nowrap" as const }}>{lbl(p.stage) || "—"}</td>
