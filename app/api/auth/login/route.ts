@@ -10,6 +10,20 @@ export async function POST(request: Request) {
     const { account_number, contact_name, pin } = await request.json();
     if (!account_number || !contact_name || !pin) return NextResponse.json({ error: "All fields are required" }, { status: 400 });
 
+    /* Check maintenance mode */
+    try {
+      const mRes = await fetch(`${SUPA_URL}/rest/v1/portal_settings?key=eq.maintenance_mode&select=value&limit=1`,
+        { headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}` } });
+      const mRows = await mRes.json();
+      if (Array.isArray(mRows) && mRows[0]?.value === "true") {
+        const msgRes = await fetch(`${SUPA_URL}/rest/v1/portal_settings?key=eq.maintenance_message&select=value&limit=1`,
+          { headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}` } });
+        const msgRows = await msgRes.json();
+        const msg = (Array.isArray(msgRows) && msgRows[0]?.value) || "Portal is under maintenance. Please try again later.";
+        return NextResponse.json({ error: msg }, { status: 503 });
+      }
+    } catch {}
+
     const acct = account_number.toUpperCase().trim();
     const name = contact_name.trim().toLowerCase();
 
@@ -47,6 +61,15 @@ export async function POST(request: Request) {
       headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}`, "Content-Type": "application/json" },
       body: JSON.stringify({ last_login: new Date().toISOString() }),
     });
+
+    /* Log login to audit trail */
+    try {
+      await fetch(`${SUPA_URL}/rest/v1/admin_audit_log`, {
+        method: "POST",
+        headers: { apikey: SUPA_SRK, Authorization: `Bearer ${SUPA_SRK}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ event_type: "client_login", account_number: acct, details: `Login: ${acct}` }),
+      });
+    } catch {}
 
     return NextResponse.json({ ok: true, account_number: acct });
   } catch (err: any) {
