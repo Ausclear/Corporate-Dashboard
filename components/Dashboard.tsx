@@ -1541,7 +1541,7 @@ export default function Dashboard() {
             <span style={{ fontSize:12, fontWeight:700, color:"#fff" }}>Admin View</span>
             <span style={{ fontSize:11, color:"rgba(255,255,255,0.7)" }}>Viewing as {co?.company_name || co?.account_number || "—"}</span>
           </div>
-          <button onClick={() => { sessionStorage.removeItem("admin_impersonate"); sessionStorage.removeItem("account_number"); window.location.href = "/admin"; }}
+          <button onClick={() => { sessionStorage.removeItem("admin_impersonate"); sessionStorage.removeItem("account_number"); router.push("/admin"); }}
             style={{ background:"rgba(255,255,255,0.15)", border:"1px solid rgba(255,255,255,0.3)", padding:"5px 14px", borderRadius:6, color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer" }}>
             ← Back to Admin
           </button>
@@ -1625,7 +1625,7 @@ export default function Dashboard() {
                 </div>
               </div>
               {isAdmin && (
-                <button onClick={() => { sessionStorage.removeItem("admin_impersonate"); sessionStorage.removeItem("account_number"); window.location.href = "/admin"; }}
+                <button onClick={() => { sessionStorage.removeItem("admin_impersonate"); sessionStorage.removeItem("account_number"); router.push("/admin"); }}
                   style={{ width:"100%", padding:"9px 0", border:"1px solid rgba(58,118,176,0.3)", background:"rgba(58,118,176,0.08)", color:"#3a76b0", fontSize:12, fontWeight:600, cursor:"pointer", borderRadius:6, transition:"all 0.15s", marginBottom:6 }}>
                   ⚡ Back to Admin
                 </button>
