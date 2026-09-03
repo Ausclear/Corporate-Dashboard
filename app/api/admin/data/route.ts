@@ -81,6 +81,48 @@ export async function POST(req: Request) {
       headers: { Prefer: "return=minimal" } as any,
       body: JSON.stringify({ event_type: "status_changed", account_number, details: `Account ${account_number} → ${value}` }),
     });
+
+    /* Send approval email via ZeptoMail when approving */
+    if (value === "approved") {
+      try {
+        // Get contact details from cache
+        const cacheRes = await supa(`corporate_dashboard_cache?account_number=eq.${encodeURIComponent(account_number)}&select=data&limit=1`);
+        const cacheRows = await cacheRes.json();
+        const co = (Array.isArray(cacheRows) && cacheRows[0]?.data?.company) || {};
+        const contactEmail = co.auth_email || co.email || "";
+        const contactFirst = co.auth_first_name || "";
+        const contactFull = [co.auth_first_name, co.auth_last_name].filter(Boolean).join(" ");
+        const companyName = co.company_name || "";
+
+        if (contactEmail) {
+          const zeptoToken = process.env.ZEPTO_SEND_TOKEN || "Zoho-enczapikey GkDdjPjZ+AIYlQiUrI67N4cEb8lm5ZvnGJqzM5lVoRMsvtsK5EwefZRMliN6ymJM6neXDFbNdOB39TLb57zYenJ7fnyvLETuOpwzGB+edd0FvHvXUPi+8/ZkXEvLmPCqMw1v6BU18i0q";
+          const templateKey = process.env.ZEPTO_APPROVAL_TEMPLATE || "7a6803.e20d1d341f34b53.k1.7afbf7d0-a758-11f1-abd8-6aade8430e9a.1a065bea7cd";
+
+          await fetch("https://api.zeptomail.com.au/v1.1/email/template", {
+            method: "POST",
+            headers: { Authorization: zeptoToken, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              template_key: templateKey,
+              from: { address: "support@ausclear.com.au", name: "AusClear Corporate Connect" },
+              to: [{ email_address: { address: contactEmail, name: contactFull || contactEmail } }],
+              merge_info: {
+                name: contactFirst || contactFull,
+                company: companyName,
+                account_number: account_number,
+                contact_name: contactFull,
+              },
+            }),
+          });
+
+          await supa("admin_audit_log", {
+            method: "POST",
+            headers: { Prefer: "return=minimal" } as any,
+            body: JSON.stringify({ event_type: "approval_email", account_number, details: `Approval email sent to ${contactEmail}` }),
+          });
+        }
+      } catch { /* email send failed — approval still stands */ }
+    }
+
     return NextResponse.json({ ok: true });
   }
 
