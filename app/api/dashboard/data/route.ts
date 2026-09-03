@@ -80,7 +80,8 @@ export async function GET(request: Request) {
       return NextResponse.json({
         company: {
           company_name:"TEST", abn:"00 000 000 000", account_number:"TE19166",
-          email:"test@test.com", phone:"0000000000",
+          email:"test@test.com.au", phone:"0000000000",
+          auth_first_name:"Test", auth_last_name:"USER", auth_email:"test@test.com.au",
           total_nominees:2, new_total:1, upgrade_total:1, transfer_total:0,
           baseline_total:0, nv1_total:2, nv2_total:0,
           total_agsva_fees:1897, total_application_fees:820, total_sponsorship_fees:2800,
