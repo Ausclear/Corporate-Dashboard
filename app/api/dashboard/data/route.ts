@@ -127,7 +127,20 @@ export async function GET(request: Request) {
     ]);
 
     const account = accountData.data?.[0];
-    if (!account) throw new Error(`Account not found (status: ${accountRes.status}, data: ${JSON.stringify(accountData).substring(0,200)})`);
+    if (!account) {
+      /* Account no longer exists in Zoho — clean up Supabase */
+      try {
+        await fetch(`${SUPA_URL}/rest/v1/corporate_dashboard_cache?account_number=eq.${encodeURIComponent(upperAcct)}`, {
+          method: "DELETE",
+          headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` },
+        });
+        await fetch(`${SUPA_URL}/rest/v1/corporate_users?account_number=eq.${encodeURIComponent(upperAcct)}`, {
+          method: "DELETE",
+          headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` },
+        });
+      } catch {}
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
 
     /* ── Fetch Leads matching this company ── */
     const companyName = account.Account_Name || "";
