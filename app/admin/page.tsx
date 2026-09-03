@@ -191,8 +191,10 @@ export default function AdminPage() {
                       <td style={{ padding:"12px 14px", fontSize:13, fontWeight:600, color:C.gold, fontFamily:"monospace" }}>${(a.total_fees||0).toLocaleString()}</td>
                       <td style={{ padding:"12px 14px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{fmtDate(a.last_login)}</td>
                       <td style={{ padding:"12px 14px" }}>
-                        <button onClick={() => impersonate(a.account_number)}
-                          style={{ background:"rgba(58,118,176,0.1)", border:"1px solid rgba(58,118,176,0.3)", padding:"5px 12px", borderRadius:5, color:C.blue, fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+                        <button onClick={() => maintenance ? impersonate(a.account_number) : null}
+                          disabled={!maintenance}
+                          title={maintenance ? "View this client's portal" : "Enable maintenance mode first"}
+                          style={{ background: maintenance ? "rgba(58,118,176,0.1)" : "#f0f0f2", border: `1px solid ${maintenance ? "rgba(58,118,176,0.3)" : "#e0e0e4"}`, padding:"5px 12px", borderRadius:5, color: maintenance ? C.blue : "#b0b0b8", fontSize:10, fontWeight:700, cursor: maintenance ? "pointer" : "not-allowed", whiteSpace:"nowrap" }}>
                           👁 View Portal
                         </button>
                       </td>
