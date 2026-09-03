@@ -368,6 +368,46 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Notification banner */}
+            <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:"20px 24px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                <div>
+                  <div style={{ fontSize:15, fontWeight:700 }}>📢 Notification Banner</div>
+                  <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>Push an announcement to all client dashboards without maintenance mode.</div>
+                </div>
+                <button onClick={async () => {
+                  const active = data?.settings?.notification_banner_active === "true";
+                  await fetch("/api/admin/data", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ action:"update_setting", key:"notification_banner_active", value:active?"false":"true" }) });
+                  loadData();
+                }}
+                  style={{ padding:"10px 20px", background:data?.settings?.notification_banner_active==="true"?"rgba(92,184,122,0.1)":"rgba(58,118,176,0.1)", border:`1px solid ${data?.settings?.notification_banner_active==="true"?"rgba(92,184,122,0.3)":"rgba(58,118,176,0.3)"}`, borderRadius:8, color:data?.settings?.notification_banner_active==="true"?C.green:C.blue, fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                  {data?.settings?.notification_banner_active === "true" ? "✓ Disable" : "Enable"}
+                </button>
+              </div>
+              <div style={{ marginBottom:12 }}>
+                <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Banner Message</label>
+                <textarea defaultValue={data?.settings?.notification_banner || ""}
+                  onBlur={async e => { await fetch("/api/admin/data", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ action:"update_setting", key:"notification_banner", value:e.target.value }) }); loadData(); }}
+                  rows={2} placeholder="e.g. We are upgrading the portal this weekend. Some features may be temporarily unavailable."
+                  style={{ width:"100%", padding:"10px 12px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:"#1a1a2e", fontSize:12, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit", WebkitTextFillColor:"#1a1a2e" }} />
+              </div>
+              <div>
+                <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Banner Type</label>
+                <div style={{ display:"flex", gap:8 }}>
+                  {[
+                    { value:"info", label:"ℹ️ Info", col:C.blue, bg:"rgba(58,118,176,0.08)", bdr:"rgba(58,118,176,0.2)" },
+                    { value:"warning", label:"⚠️ Warning", col:C.amber, bg:"rgba(212,147,92,0.08)", bdr:"rgba(212,147,92,0.2)" },
+                    { value:"success", label:"✅ Success", col:C.green, bg:"rgba(92,184,122,0.08)", bdr:"rgba(92,184,122,0.2)" },
+                  ].map(t => (
+                    <button key={t.value} onClick={async () => { await fetch("/api/admin/data", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ action:"update_setting", key:"notification_banner_type", value:t.value }) }); loadData(); }}
+                      style={{ padding:"6px 14px", background:data?.settings?.notification_banner_type===t.value?t.bg:"transparent", border:`1px solid ${data?.settings?.notification_banner_type===t.value?t.bdr:C.line}`, borderRadius:6, color:data?.settings?.notification_banner_type===t.value?t.col:C.muted, fontSize:11, fontWeight:600, cursor:"pointer" }}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Portal stats */}
             <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:"20px 24px" }}>
               <div style={{ fontSize:15, fontWeight:700, marginBottom:14 }}>📊 Portal Stats</div>

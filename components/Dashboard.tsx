@@ -195,6 +195,7 @@ function Chevrons({ stages, active, dark = true }: { stages: string[]; active: s
 export default function Dashboard() {
   const [tab, setTab]             = useState<"overview"|"batches"|"personnel"|"financials"|"analytics"|"messages"|"account"|"settings">("overview");
   const [showWelcome, setShowWelcome] = useState(true);
+  const [notifBanner, setNotifBanner] = useState<{text:string;type:string}|null>(null);
   const [isAdmin, setIsAdmin]     = useState(false);
   const [data, setData]           = useState<Data | null>(null);
   const [loading, setLoading]     = useState(true);
@@ -332,6 +333,7 @@ export default function Dashboard() {
     if (sessionStorage.getItem("admin_impersonate") !== "1") {
       fetch("/api/admin/maintenance-check").then(r => r.json()).then(d => {
         if (d.active) { sessionStorage.removeItem("account_number"); router.push("/maintenance"); return; }
+        if (d.banner && d.banner.text) setNotifBanner(d.banner);
       }).catch(() => {});
     }
     fetch(`/api/dashboard/data?account_number=${encodeURIComponent(acct)}`).then(r => r.json())
@@ -1658,6 +1660,18 @@ export default function Dashboard() {
                     <div style={{ fontSize:9, color:C.dim, textTransform:"uppercase" as const, letterSpacing:"0.12em", marginTop:5, fontWeight:600 }}>{s.label}</div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Notification banner from admin */}
+            {notifBanner && (
+              <div style={{
+                background: notifBanner.type === "warning" ? (isDark?"rgba(212,147,92,0.08)":"rgba(212,147,92,0.06)") : notifBanner.type === "success" ? (isDark?"rgba(92,184,122,0.08)":"rgba(92,184,122,0.06)") : (isDark?"rgba(58,118,176,0.08)":"rgba(58,118,176,0.06)"),
+                border: `1px solid ${notifBanner.type === "warning" ? (isDark?"rgba(212,147,92,0.25)":"rgba(212,147,92,0.2)") : notifBanner.type === "success" ? (isDark?"rgba(92,184,122,0.25)":"rgba(92,184,122,0.2)") : (isDark?"rgba(58,118,176,0.25)":"rgba(58,118,176,0.2)")}`,
+                borderRadius: 10, padding: "12px 18px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10,
+              }}>
+                <span style={{ fontSize: 16 }}>{notifBanner.type === "warning" ? "⚠️" : notifBanner.type === "success" ? "✅" : "ℹ️"}</span>
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{notifBanner.text}</div>
               </div>
             )}
 
