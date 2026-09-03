@@ -371,14 +371,14 @@ export default function Dashboard() {
   const accountStage = co?.corp_deal_stage || "Onboard Corporate Account";
 
   const TABS = [
-    { key:"overview"   as const, label:"Overview"   },
-    { key:"batches"    as const, label:"Nominated Groups" },
-    { key:"personnel"  as const, label:"Personnel"   },
-    { key:"financials" as const, label:"Financials"  },
-    { key:"analytics"  as const, label:"Analytics"   },
-    { key:"messages"   as const, label:"Messages"    },
-    { key:"account"    as const, label:"My Details"     },
-    { key:"settings"   as const, label:"Settings"    },
+    { key:"overview"   as const, label:"Overview",          icon:"📋" },
+    { key:"batches"    as const, label:"Nominated Groups",  icon:"📁" },
+    { key:"personnel"  as const, label:"Personnel",         icon:"👥" },
+    { key:"financials" as const, label:"Financials",        icon:"💰" },
+    { key:"analytics"  as const, label:"Analytics",         icon:"📊" },
+    { key:"messages"   as const, label:"Messages",          icon:"✉️" },
+    { key:"account"    as const, label:"My Details",        icon:"🏢" },
+    { key:"settings"   as const, label:"Settings",          icon:"⚙️" },
   ];
 
   const exportPDF = () => {
@@ -1523,7 +1523,7 @@ export default function Dashboard() {
                   style={{ display:"flex", alignItems:"center", width:"100%", padding:"13px 20px", border:"none", borderLeft:tab===t.key?`3px solid ${C.gold}`:"3px solid transparent", background:tab===t.key?C.goldD:"transparent", color:tab===t.key?C.gold:C.muted, fontSize:13, fontWeight:tab===t.key?700:400, cursor:"pointer", textAlign:"left" as const, transition:"all 0.2s", letterSpacing:"0.01em" }}
                   onMouseEnter={e => { if(tab!==t.key) e.currentTarget.style.background = isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)"; }}
                   onMouseLeave={e => { if(tab!==t.key) e.currentTarget.style.background = "transparent"; }}>
-                  {t.label}
+                  <span style={{ marginRight:10, fontSize:15, opacity:tab===t.key?1:0.6 }}>{t.icon}</span>{t.label}
                   {t.key === "messages" && unreadMsgCount > 0 && <span style={{ marginLeft:"auto", background:C.red, color:"#fff", fontSize:9, fontWeight:700, borderRadius:10, padding:"2px 7px", animation:"pulse 2s infinite" }}>{unreadMsgCount}</span>}
                 </button>
               ))}
