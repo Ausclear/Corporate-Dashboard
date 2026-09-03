@@ -429,7 +429,7 @@ export default function Dashboard() {
               { icon:"💰", label:"Financials", desc:"Invoices & payments", tab:"financials" as const },
               { icon:"✉️", label:"Messages", desc:"Contact your account team", tab:"messages" as const },
             ].map((q,i) => (
-              <button key={i} onClick={() => { setTab(q.tab); setShowWelcome(false); const acct=sessionStorage.getItem("account_number"); if(acct)localStorage.setItem(`ausclear_welcomed_${acct}`,"1"); }}
+              <button key={i} onClick={() => { setTab(q.tab); }}
                 style={{ flex:"1 1 120px", background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)", border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", textAlign:"left" as const, transition:"all 0.2s" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor=C.gold; e.currentTarget.style.background=isDark?"rgba(201,168,76,0.04)":"rgba(37,99,176,0.04)"; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor=C.line; e.currentTarget.style.background=isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)"; }}>
