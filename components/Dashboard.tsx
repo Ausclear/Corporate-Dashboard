@@ -609,13 +609,13 @@ export default function Dashboard() {
           return (
             <div key={p.id} style={{ borderBottom:i<ppl.length-1?`1px solid ${C.line}`:"none" }}>
               <div onClick={() => setExpandedP(open ? null : p.id)}
-                style={{ display:"flex", gap:14, alignItems:"center", padding:"14px 18px", cursor:"pointer", background:open?C.card2:"transparent" }}
+                style={{ display:"flex", gap:14, alignItems:"center", padding:"16px 20px", cursor:"pointer", background:open?C.card2:"transparent", transition:"background 0.2s" }}
                 onMouseEnter={e => { if(!open)(e.currentTarget as HTMLDivElement).style.background = C.card2; }}
                 onMouseLeave={e => { if(!open)(e.currentTarget as HTMLDivElement).style.background = "transparent"; }}>
-                <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, background:p.onboarding_status==="Awaiting Application Form"?C.amber:p.stage?C.gold:C.dim }} />
+                <div style={{ width:36, height:36, borderRadius:"50%", flexShrink:0, background:isDark?"rgba(201,168,76,0.1)":"rgba(37,99,176,0.08)", border:`1px solid ${isDark?"rgba(201,168,76,0.2)":"rgba(37,99,176,0.15)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:C.gold }}>{p.employee_name.split(" ").map((w:string)=>w[0]).join("").slice(0,2)}</div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:14, fontWeight:600, color:C.text }}>{p.employee_name}</div>
-                  <div style={{ fontSize:11, color:C.muted, marginTop:2, display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                  <div style={{ fontSize:14, fontWeight:700, color:C.text, letterSpacing:"-0.01em" }}>{p.employee_name}</div>
+                  <div style={{ fontSize:11, color:C.muted, marginTop:3, display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
                     {lbl(p.stage) || "—"}
                     {p.onboarding_status==="Awaiting Application Form" && <span style={{ fontSize:9, fontWeight:700, color:C.amber, background:"rgba(212,147,92,0.15)", border:"1px solid rgba(212,147,92,0.35)", padding:"1px 7px", borderRadius:3 }}>AWAITING APPLICATION FORM</span>}
                   </div>
@@ -623,11 +623,11 @@ export default function Dashboard() {
                 <div style={{ display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
                   <Pill t={t} />
                   {p.clearance_request_type && <span style={{ fontSize:10, fontWeight:600, color:C.muted, background:"rgba(122,122,130,0.12)", border:`1px solid rgba(122,122,130,0.3)`, padding:"2px 7px", borderRadius:3 }}>{p.clearance_request_type}</span>}
-                  <span style={{ color:C.dim, fontSize:16, display:"inline-block", transform:open?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>›</span>
+                  <span style={{ color:C.dim, fontSize:18, display:"inline-block", transform:open?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.25s ease" }}>›</span>
                 </div>
               </div>
               {open && (
-                <div style={{ background:C.card2, borderTop:`1px solid ${C.line}`, padding:"20px 18px 24px" }}>
+                <div style={{ background:C.card2, borderTop:`1px solid ${C.line}`, padding:"24px 20px 28px", animation:"fadeIn 0.3s ease" }}>
                   {/* Horizontal clearance status */}
                   <div style={{ marginBottom:20 }}>
                     <div style={{ fontSize:10, color:C.gold, textTransform:"uppercase" as const, letterSpacing:"0.12em", fontWeight:700, marginBottom:14 }}>Clearance Status</div>
@@ -680,7 +680,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Employee details grid */}
-                  <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:"14px 32px", marginBottom:20 }}>
+                  <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:"12px", marginBottom:20 }}>
                     {[
                       { label:"Email",           value:p.email || "—", icon:"✉" },
                       { label:"Mobile",          value:p.mobile || "—", icon:"📱" },
@@ -691,11 +691,11 @@ export default function Dashboard() {
                       { label:"Submission Date", value:$d(p.batch_date), icon:"📅" },
                       { label:"Revalidation",    value:$d(p.revalidation_date), icon:"🔄" },
                     ].map((row, ri) => (
-                      <div key={ri} style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-                        <span style={{ fontSize:13, flexShrink:0, marginTop:1 }}>{row.icon}</span>
-                        <div>
-                          <div style={{ fontSize:10, color:C.muted, textTransform:"uppercase" as const, letterSpacing:"0.1em", fontWeight:600, marginBottom:2 }}>{row.label}</div>
-                          <div style={{ fontSize:13, color:row.value==="—"?C.dim:C.text, fontWeight:500 }}>{row.value}</div>
+                      <div key={ri} style={{ display:"flex", gap:10, alignItems:"center", background:isDark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.015)", border:`1px solid ${C.line}`, borderRadius:8, padding:"10px 14px" }}>
+                        <span style={{ fontSize:16, flexShrink:0 }}>{row.icon}</span>
+                        <div style={{ minWidth:0 }}>
+                          <div style={{ fontSize:10, color:C.muted, textTransform:"uppercase" as const, letterSpacing:"0.1em", fontWeight:600 }}>{row.label}</div>
+                          <div style={{ fontSize:13, color:row.value==="—"?C.dim:C.text, fontWeight:600, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const }}>{row.value}</div>
                         </div>
                       </div>
                     ))}
