@@ -195,6 +195,7 @@ function Chevrons({ stages, active, dark = true }: { stages: string[]; active: s
 export default function Dashboard() {
   const [tab, setTab]             = useState<"overview"|"batches"|"personnel"|"financials"|"analytics"|"messages"|"account"|"settings">("overview");
   const [showWelcome, setShowWelcome] = useState(true);
+  const [isAdmin, setIsAdmin]     = useState(false);
   const [data, setData]           = useState<Data | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
@@ -210,6 +211,7 @@ export default function Dashboard() {
   useEffect(() => {
     const saved = localStorage.getItem("ausclear_theme") as "dark"|"light" | null;
     if (saved) setTheme(saved);
+    if (sessionStorage.getItem("admin_impersonate") === "1") setIsAdmin(true);
     setMounted(true);
   }, []);
 
@@ -1524,6 +1526,21 @@ export default function Dashboard() {
         </>
       )}
 
+      {/* Admin impersonation banner */}
+      {isAdmin && (
+        <div style={{ background:"linear-gradient(90deg, #c05050, #8a3030)", padding:"8px 24px", display:"flex", justifyContent:"space-between", alignItems:"center", zIndex:60 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:14 }}>⚡</span>
+            <span style={{ fontSize:12, fontWeight:700, color:"#fff" }}>Admin View</span>
+            <span style={{ fontSize:11, color:"rgba(255,255,255,0.7)" }}>Viewing as {co?.company_name || co?.account_number || "—"}</span>
+          </div>
+          <button onClick={() => { sessionStorage.removeItem("admin_impersonate"); sessionStorage.removeItem("account_number"); window.location.href = "/admin"; }}
+            style={{ background:"rgba(255,255,255,0.15)", border:"1px solid rgba(255,255,255,0.3)", padding:"5px 14px", borderRadius:6, color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer" }}>
+            ← Back to Admin
+          </button>
+        </div>
+      )}
+
       <div style={{ position:"sticky", top:0, zIndex:50, background:C.topbar, backdropFilter:"blur(16px)", borderBottom:`1px solid ${C.line}`, boxShadow:isDark?"0 4px 20px rgba(0,0,0,0.5)":"0 2px 12px rgba(0,0,0,0.06)", height:64, padding:"0 24px", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ position:"absolute", bottom:0, left:0, right:0, height:2, background:`linear-gradient(90deg, ${C.brandGold}, ${C.brandGold}55, transparent)` }} />
         <div style={{ display:"flex", alignItems:"center", gap:isMobile ? 8 : 14 }}>
@@ -1600,6 +1617,12 @@ export default function Dashboard() {
                   <div style={{ fontSize:10, color:C.dim }}>{co?.account_number || ""}</div>
                 </div>
               </div>
+              {isAdmin && (
+                <button onClick={() => { sessionStorage.removeItem("admin_impersonate"); sessionStorage.removeItem("account_number"); window.location.href = "/admin"; }}
+                  style={{ width:"100%", padding:"9px 0", border:"1px solid rgba(58,118,176,0.3)", background:"rgba(58,118,176,0.08)", color:"#3a76b0", fontSize:12, fontWeight:600, cursor:"pointer", borderRadius:6, transition:"all 0.15s", marginBottom:6 }}>
+                  ⚡ Back to Admin
+                </button>
+              )}
               <button onClick={() => { router.push("/logout"); }}
                 style={{ width:"100%", padding:"9px 0", border:`1px solid ${isDark?"rgba(199,122,122,0.3)":"rgba(192,80,80,0.3)"}`, background:isDark?"rgba(199,122,122,0.08)":"rgba(192,80,80,0.06)", color:C.red, fontSize:12, fontWeight:600, cursor:"pointer", borderRadius:6, transition:"all 0.15s" }}>
                 Sign Out
