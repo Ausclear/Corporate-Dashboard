@@ -204,6 +204,18 @@ export default function AdminPage() {
       </div>
 
       <div style={{ padding:"24px", maxWidth:1200, margin:"0 auto" }}>
+        {/* Live banner preview */}
+        {data?.settings?.notification_banner_active === "true" && data?.settings?.notification_banner && (
+          <div style={{
+            background: data.settings.notification_banner_type === "warning" ? "rgba(212,147,92,0.06)" : data.settings.notification_banner_type === "success" ? "rgba(92,184,122,0.06)" : "rgba(58,118,176,0.06)",
+            border: `1px solid ${data.settings.notification_banner_type === "warning" ? "rgba(212,147,92,0.2)" : data.settings.notification_banner_type === "success" ? "rgba(92,184,122,0.2)" : "rgba(58,118,176,0.2)"}`,
+            borderRadius: 10, padding: "12px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <span style={{ fontSize: 16 }}>{data.settings.notification_banner_type === "warning" ? "⚠️" : data.settings.notification_banner_type === "success" ? "✅" : "ℹ️"}</span>
+            <div style={{ flex:1, fontSize: 13, color: "#1a1a2e", lineHeight: 1.5 }}>{data.settings.notification_banner}</div>
+            <span style={{ fontSize: 9, color: "#a0a0a8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", border: "1px solid #e2e4e9", padding: "3px 8px", borderRadius: 4 }}>LIVE PREVIEW</span>
+          </div>
+        )}
         {/* Accounts tab */}
         {activeTab === "accounts" && (
           <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12 }}>
