@@ -397,41 +397,6 @@ export default function Dashboard() {
           onMouseLeave={e => { e.currentTarget.style.borderColor=C.line; e.currentTarget.style.color=C.muted; }}>📥 Export CSV</button>
       </div>
 
-      {showWelcome && (
-        <div style={{ background:isDark?"linear-gradient(135deg, #111828 0%, #0d1420 100%)":"linear-gradient(135deg, #f8faff 0%, #eef3fb 100%)", border:`1px solid ${isDark?"rgba(201,168,76,0.15)":"rgba(37,99,176,0.12)"}`, borderRadius:16, padding:"28px 28px 24px", position:"relative" as const, overflow:"hidden", boxShadow:isDark?"0 8px 32px rgba(0,0,0,0.3)":"0 4px 20px rgba(0,0,0,0.06)" }}>
-          {/* Decorative accent */}
-          <div style={{ position:"absolute" as const, top:0, left:0, right:0, height:3, background:isDark?"linear-gradient(90deg, #c9a84c, #9a7530, transparent)":"linear-gradient(90deg, #2563b0, #4a90c4, transparent)" }} />
-          <div style={{ position:"absolute" as const, top:20, right:20, opacity:0.04, fontSize:120, lineHeight:1, pointerEvents:"none" as const }}>🛡️</div>
-          
-          <button onClick={() => { setShowWelcome(false); const acct = sessionStorage.getItem("account_number"); if(acct) localStorage.setItem(`ausclear_welcomed_${acct}`, "1"); }}
-            style={{ position:"absolute" as const, top:12, right:14, background:"none", border:"none", color:C.muted, fontSize:18, cursor:"pointer", padding:4, lineHeight:1 }}>✕</button>
-          
-          <div style={{ fontSize:11, color:C.gold, textTransform:"uppercase" as const, letterSpacing:"0.15em", fontWeight:600, marginBottom:8 }}>Welcome to Corporate Connect™</div>
-          <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:6 }}>{co?.auth_first_name ? `Hello, ${co.auth_first_name}` : `Welcome`}</div>
-          <div style={{ fontSize:13, color:C.muted, lineHeight:1.6, maxWidth:520 }}>
-            Your secure clearance management portal for <span style={{ color:C.text, fontWeight:600 }}>{co?.company_name || "your organisation"}</span>. 
-            From here you can track your sponsored employees, monitor clearance progress, manage nominations, view financials, and communicate directly with your AusClear account team.
-          </div>
-          <div style={{ display:"flex", gap:10, marginTop:18, flexWrap:"wrap" as const }}>
-            {[
-              { icon:"👥", label:"Personnel", desc:"Track your sponsored staff", tab:"personnel" as const },
-              { icon:"📊", label:"Analytics", desc:"Clearance progress insights", tab:"analytics" as const },
-              { icon:"💰", label:"Financials", desc:"Invoices & payments", tab:"financials" as const },
-              { icon:"✉️", label:"Messages", desc:"Contact your account team", tab:"messages" as const },
-            ].map((q,i) => (
-              <button key={i} onClick={() => { setTab(q.tab); }}
-                style={{ flex:"1 1 120px", background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)", border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", textAlign:"left" as const, transition:"all 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor=C.gold; e.currentTarget.style.background=isDark?"rgba(201,168,76,0.04)":"rgba(37,99,176,0.04)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor=C.line; e.currentTarget.style.background=isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)"; }}>
-                <div style={{ fontSize:18, marginBottom:4 }}>{q.icon}</div>
-                <div style={{ fontSize:12, fontWeight:700, color:C.text }}>{q.label}</div>
-                <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>{q.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {isMobile && (
         <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, boxShadow:isDark?"0 4px 16px rgba(0,0,0,0.25)":"0 2px 8px rgba(0,0,0,0.05)", transition:"box-shadow 0.2s", borderTop:`2px solid ${C.gold}`, padding:"18px 20px" }}>
           <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:4 }}>{co?.company_name}</div>
@@ -1603,6 +1568,39 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
+
+            {showWelcome && (
+              <div style={{ background:isDark?"linear-gradient(135deg, #111828 0%, #0d1420 100%)":"linear-gradient(135deg, #f8faff 0%, #eef3fb 100%)", border:`1px solid ${isDark?"rgba(201,168,76,0.15)":"rgba(37,99,176,0.12)"}`, borderRadius:16, padding:"28px 28px 24px", position:"relative" as const, overflow:"hidden", boxShadow:isDark?"0 8px 32px rgba(0,0,0,0.3)":"0 4px 20px rgba(0,0,0,0.06)", marginBottom:16 }}>
+                <div style={{ position:"absolute" as const, top:0, left:0, right:0, height:3, background:isDark?"linear-gradient(90deg, #c9a84c, #9a7530, transparent)":"linear-gradient(90deg, #2563b0, #4a90c4, transparent)" }} />
+                <div style={{ position:"absolute" as const, top:20, right:20, opacity:0.04, fontSize:120, lineHeight:1, pointerEvents:"none" as const }}>🛡️</div>
+                <button onClick={() => { setShowWelcome(false); const acct = sessionStorage.getItem("account_number"); if(acct) localStorage.setItem(`ausclear_welcomed_${acct}`, "1"); }}
+                  style={{ position:"absolute" as const, top:12, right:14, background:"none", border:"none", color:C.muted, fontSize:18, cursor:"pointer", padding:4, lineHeight:1 }}>✕</button>
+                <div style={{ fontSize:11, color:C.gold, textTransform:"uppercase" as const, letterSpacing:"0.15em", fontWeight:600, marginBottom:8 }}>Welcome to Corporate Connect™</div>
+                <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:6 }}>{co?.auth_first_name ? `Hello, ${co.auth_first_name}` : "Welcome"}</div>
+                <div style={{ fontSize:13, color:C.muted, lineHeight:1.6, maxWidth:520 }}>
+                  Your secure clearance management portal for <span style={{ color:C.text, fontWeight:600 }}>{co?.company_name || "your organisation"}</span>. 
+                  Track your sponsored employees, monitor clearance progress, manage nominations, view financials, and communicate directly with your AusClear account team.
+                </div>
+                <div style={{ display:"flex", gap:10, marginTop:18, flexWrap:"wrap" as const }}>
+                  {[
+                    { icon:"👥", label:"Personnel", desc:"Track your sponsored staff", tab:"personnel" as const },
+                    { icon:"📊", label:"Analytics", desc:"Clearance progress insights", tab:"analytics" as const },
+                    { icon:"💰", label:"Financials", desc:"Invoices & payments", tab:"financials" as const },
+                    { icon:"✉️", label:"Messages", desc:"Contact your account team", tab:"messages" as const },
+                  ].map((q,i) => (
+                    <button key={i} onClick={() => setTab(q.tab)}
+                      style={{ flex:"1 1 120px", background:isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)", border:`1px solid ${C.line}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", textAlign:"left" as const, transition:"all 0.2s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor=C.gold; e.currentTarget.style.background=isDark?"rgba(201,168,76,0.04)":"rgba(37,99,176,0.04)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor=C.line; e.currentTarget.style.background=isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)"; }}>
+                      <div style={{ fontSize:18, marginBottom:4 }}>{q.icon}</div>
+                      <div style={{ fontSize:12, fontWeight:700, color:C.text }}>{q.label}</div>
+                      <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>{q.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {tab==="overview"   && <div key="ov" style={{ animation:"fadeIn 0.3s ease" }}><Overview /></div>}
             {tab==="batches"    && <div key="ba" style={{ animation:"fadeIn 0.3s ease" }}><Batches /></div>}
             {tab==="personnel"  && <div key="pe" style={{ animation:"fadeIn 0.3s ease" }}><Personnel /></div>}
