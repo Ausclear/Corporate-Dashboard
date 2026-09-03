@@ -126,6 +126,60 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  if (action === "deactivate") {
+    // Set status to deactivated
+    await supa(`corporate_users?account_number=eq.${encodeURIComponent(account_number)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" } as any,
+      body: JSON.stringify({ status: "deactivated" }),
+    });
+    await supa("admin_audit_log", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" } as any,
+      body: JSON.stringify({ event_type: "account_deactivated", account_number, details: `Account ${account_number} deactivated: ${value}` }),
+    });
+
+    // Send deactivation email via ZeptoMail
+    try {
+      const cacheRes = await supa(`corporate_dashboard_cache?account_number=eq.${encodeURIComponent(account_number)}&select=data&limit=1`);
+      const cacheRows = await cacheRes.json();
+      const co = (Array.isArray(cacheRows) && cacheRows[0]?.data?.company) || {};
+      const contactEmail = co.auth_email || co.email || "";
+      const contactFirst = co.auth_first_name || "";
+      const contactFull = [co.auth_first_name, co.auth_last_name].filter(Boolean).join(" ");
+      const companyName = co.company_name || "";
+
+      if (contactEmail) {
+        const zeptoToken = process.env.ZEPTO_SEND_TOKEN || "Zoho-enczapikey GkDdjPjZ+AIYlQiUrI67N4cEb8lm5ZvnGJqzM5lVoRMsvtsK5EwefZRMliN6ymJM6neXDFbNdOB39TLb57zYenJ7fnyvLETuOpwzGB+edd0FvHvXUPi+8/ZkXEvLmPCqMw1v6BU18i0q";
+        const templateKey = process.env.ZEPTO_DEACTIVATION_TEMPLATE || "7a6803.e20d1d341f34b53.k1.fd6715d0-a75b-11f1-abd8-6aade8430e9a.1a065d5a7ad";
+
+        await fetch("https://api.zeptomail.com.au/v1.1/email/template", {
+          method: "POST",
+          headers: { Authorization: zeptoToken, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            template_key: templateKey,
+            from: { address: "support@ausclear.com.au", name: "AusClear Corporate Connect" },
+            to: [{ email_address: { address: contactEmail, name: contactFull || contactEmail } }],
+            merge_info: {
+              name: contactFirst || contactFull,
+              company: companyName,
+              account_number: account_number,
+              reason: value,
+            },
+          }),
+        });
+
+        await supa("admin_audit_log", {
+          method: "POST",
+          headers: { Prefer: "return=minimal" } as any,
+          body: JSON.stringify({ event_type: "deactivation_email", account_number, details: `Deactivation email sent to ${contactEmail}` }),
+        });
+      }
+    } catch {}
+
+    return NextResponse.json({ ok: true });
+  }
+
   if (action === "reset_pin") {
     const { new_pin } = await req.json().catch(() => ({ new_pin: null }));
     const pinVal = value || new_pin;

@@ -13,6 +13,8 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"accounts"|"approvals"|"audit"|"settings">("accounts");
   const [resetPinAcct, setResetPinAcct] = useState<string|null>(null);
   const [resetPinVal, setResetPinVal] = useState("");
+  const [deactAcct, setDeactAcct] = useState<string|null>(null);
+  const [deactReason, setDeactReason] = useState("");
   const [impersonating, setImpersonating] = useState<string|null>(null);
 
   useEffect(() => {
@@ -94,6 +96,18 @@ export default function AdminPage() {
     });
     setResetPinAcct(null);
     setResetPinVal("");
+    loadData();
+  };
+
+  const handleDeactivate = async () => {
+    if (!deactAcct || !deactReason.trim()) return;
+    await fetch("/api/admin/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "deactivate", account_number: deactAcct, value: deactReason.trim() }),
+    });
+    setDeactAcct(null);
+    setDeactReason("");
     loadData();
   };
 
@@ -239,6 +253,18 @@ export default function AdminPage() {
                           style={{ background:"rgba(154,117,48,0.08)", border:"1px solid rgba(154,117,48,0.2)", padding:"5px 12px", borderRadius:5, color:C.gold, fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
                           🔑 Reset PIN
                         </button>
+                        {a.status !== "deactivated" && (
+                          <button onClick={() => { setDeactAcct(a.account_number); setDeactReason(""); }}
+                            style={{ background:"rgba(201,80,80,0.06)", border:"1px solid rgba(201,80,80,0.2)", padding:"5px 12px", borderRadius:5, color:C.red, fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+                            🚫 Deactivate
+                          </button>
+                        )}
+                        {a.status === "deactivated" && (
+                          <button onClick={() => setAccountStatus(a.account_number, "approved")}
+                            style={{ background:"rgba(92,184,122,0.08)", border:"1px solid rgba(92,184,122,0.2)", padding:"5px 12px", borderRadius:5, color:C.green, fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+                            ✓ Reactivate
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -388,6 +414,27 @@ export default function AdminPage() {
                 style={{ padding:"9px 18px", border:"1px solid #e2e4e9", background:"#fff", borderRadius:6, color:"#6b6b7b", fontSize:12, fontWeight:600, cursor:"pointer" }}>Cancel</button>
               <button onClick={handleResetPin} disabled={resetPinVal.length !== 6}
                 style={{ padding:"9px 18px", border:"none", background:resetPinVal.length===6 ? "linear-gradient(135deg, #c05050, #9a3535)" : "#e8e8f0", borderRadius:6, color:resetPinVal.length===6 ? "#fff" : "#b0b0b8", fontSize:12, fontWeight:700, cursor:resetPinVal.length===6 ? "pointer" : "not-allowed" }}>Reset PIN</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivation Modal */}
+      {deactAcct && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.4)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={() => setDeactAcct(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"#fff", borderRadius:12, padding:"28px 24px", width:420, border:"1px solid #e2e4e9" }}>
+            <div style={{ fontSize:16, fontWeight:700, color:"#c05050", marginBottom:4 }}>🚫 Deactivate Account</div>
+            <div style={{ fontSize:12, color:"#6b6b7b", marginBottom:20 }}>Deactivating <span style={{ fontFamily:"monospace", fontWeight:700, color:"#9a7530" }}>{deactAcct}</span> will block their portal access and send them an email with the reason below.</div>
+            <div style={{ marginBottom:16 }}>
+              <label style={{ display:"block", fontSize:10, color:"#6b6b7b", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Reason for deactivation</label>
+              <textarea value={deactReason} onChange={e => setDeactReason(e.target.value)} rows={3} placeholder="e.g. Sponsorship agreement concluded"
+                style={{ width:"100%", padding:"10px 12px", background:"#f8f9fb", border:"1px solid #e2e4e9", borderRadius:8, color:"#1a1a2e", fontSize:13, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit", WebkitTextFillColor:"#1a1a2e" }} />
+            </div>
+            <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+              <button onClick={() => setDeactAcct(null)}
+                style={{ padding:"9px 18px", border:"1px solid #e2e4e9", background:"#fff", borderRadius:6, color:"#6b6b7b", fontSize:12, fontWeight:600, cursor:"pointer" }}>Cancel</button>
+              <button onClick={handleDeactivate} disabled={!deactReason.trim()}
+                style={{ padding:"9px 18px", border:"none", background:deactReason.trim() ? "linear-gradient(135deg, #c05050, #9a3535)" : "#e8e8f0", borderRadius:6, color:deactReason.trim() ? "#fff" : "#b0b0b8", fontSize:12, fontWeight:700, cursor:deactReason.trim() ? "pointer" : "not-allowed" }}>Deactivate & Send Email</button>
             </div>
           </div>
         </div>
