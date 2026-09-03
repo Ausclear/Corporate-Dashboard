@@ -80,16 +80,16 @@ export default function AdminPage() {
   };
 
   const C = {
-    bg: "#07080c", card: "#0e1018", card2: "#141820", line: "#1a1f2e", text: "#e8e5de",
-    muted: "#6a6a78", dim: "#3a3a48", gold: "#c9a84c", green: "#5cb87a", red: "#c97a7a",
+    bg: "#f4f5f7", card: "#ffffff", card2: "#f8f9fb", line: "#e2e4e9", text: "#1a1a2e",
+    muted: "#6b6b7b", dim: "#a0a0a8", gold: "#9a7530", green: "#5cb87a", red: "#c05050",
     blue: "#3a76b0", amber: "#d4935c",
   };
 
   if (!authed) return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg, #050508, #0a0d14)", fontFamily:"'Segoe UI',sans-serif" }}>
-      <form onSubmit={handleLogin} style={{ width:380, background:C.card, border:`1px solid ${C.line}`, borderRadius:16, padding:"36px 28px", borderTop:`2px solid #c05050` }}>
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg, #f0f2f5, #e8ecf0)", fontFamily:"'Segoe UI',sans-serif" }}>
+      <form onSubmit={handleLogin} style={{ width:380, background:"#fff", border:"1px solid #d8dce4", borderRadius:16, padding:"36px 28px", borderTop:"2px solid #c05050", boxShadow:"0 8px 30px rgba(0,0,0,0.08)" }}>
         <div style={{ textAlign:"center", marginBottom:24 }}>
-          <div style={{ width:48, height:48, margin:"0 auto 12px", borderRadius:10, background:"linear-gradient(135deg, #c05050, #8a3030)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:48, height:48, margin:"0 auto 12px", borderRadius:10, background:"linear-gradient(135deg, #c05050, #9a3535)", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <span style={{ fontSize:20, fontWeight:800, color:"#fff" }}>⚡</span>
           </div>
           <h1 style={{ fontSize:20, fontWeight:700, color:C.text, margin:0 }}>Admin Console</h1>
@@ -98,15 +98,15 @@ export default function AdminPage() {
         <div style={{ marginBottom:16 }}>
           <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:600 }}>Email</label>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="off"
-            style={{ width:"100%", padding:"12px 14px", background:"#07070a", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" }} />
+            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" }} />
         </div>
         <div style={{ marginBottom:20 }}>
           <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.12em", fontWeight:600 }}>Password</label>
           <input value={password} onChange={e => setPassword(e.target.value)} type="password"
-            style={{ width:"100%", padding:"12px 14px", background:"#07070a", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" }} />
+            style={{ width:"100%", padding:"12px 14px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" }} />
         </div>
         {error && <div style={{ background:"rgba(201,90,90,0.1)", border:"1px solid rgba(201,90,90,0.3)", borderRadius:8, padding:"8px 12px", marginBottom:14, color:C.red, fontSize:12 }}>⚠ {error}</div>}
-        <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"linear-gradient(135deg, #c05050, #8a3030)", border:"none", borderRadius:8, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>
+        <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"linear-gradient(135deg, #c05050, #9a3535)", border:"none", borderRadius:8, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>
           {loading ? "Verifying..." : "Sign In"}
         </button>
       </form>
@@ -126,7 +126,7 @@ export default function AdminPage() {
       {/* Top bar */}
       <div style={{ background:C.card, borderBottom:`1px solid ${C.line}`, padding:"12px 24px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ width:32, height:32, borderRadius:8, background:"linear-gradient(135deg, #c05050, #8a3030)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:32, height:32, borderRadius:8, background:"linear-gradient(135deg, #c05050, #9a3535)", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <span style={{ fontSize:14, fontWeight:800, color:"#fff" }}>⚡</span>
           </div>
           <div>
@@ -244,7 +244,7 @@ export default function AdminPage() {
                 <textarea defaultValue={data?.settings?.maintenance_message || ""}
                   onBlur={e => updateMessage(e.target.value)}
                   rows={3}
-                  style={{ width:"100%", padding:"10px 12px", background:"#07070a", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:12, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit" }} />
+                  style={{ width:"100%", padding:"10px 12px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:12, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit" }} />
               </div>
             </div>
 
