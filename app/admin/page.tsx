@@ -8,6 +8,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [data, setData] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"accounts"|"approvals"|"audit"|"settings">("accounts");
@@ -22,6 +23,7 @@ export default function AdminPage() {
       setAuthed(true);
       loadData();
     }
+    setChecking(false);
   }, []);
 
   const loadData = async () => {
@@ -122,6 +124,8 @@ export default function AdminPage() {
     muted: "#6b6b7b", dim: "#a0a0a8", gold: "#9a7530", green: "#5cb87a", red: "#c05050",
     blue: "#3a76b0", amber: "#d4935c",
   };
+
+  if (checking) return <div style={{ minHeight:"100vh", background:"#f4f5f7" }} />;
 
   if (!authed) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(145deg, #f0f2f5, #e8ecf0)", fontFamily:"'Segoe UI',sans-serif" }}>
