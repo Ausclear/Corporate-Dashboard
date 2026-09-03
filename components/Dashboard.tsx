@@ -1222,6 +1222,38 @@ export default function Dashboard() {
       </div>
     );
 
+    const [verifyEmail, setVerifyEmail] = useState("");
+    const [emailVerified, setEmailVerified] = useState(false);
+    const [verifyErr, setVerifyErr] = useState("");
+
+    const handleVerifyEmail = () => {
+      const authEmail = (co?.auth_email || "").toLowerCase().trim();
+      if (verifyEmail.toLowerCase().trim() === authEmail) {
+        setEmailVerified(true);
+        setVerifyErr("");
+      } else {
+        setVerifyErr("Email does not match our records");
+      }
+    };
+
+    const pinBoxes = (val: string, set: (v:string)=>void, prefix: string, highlight?: boolean) => (
+      <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+        {[0,1,2,3,4,5].map(i => (
+          <input key={i} id={`${prefix}-${i}`} type="text" inputMode="numeric" maxLength={1}
+            value={val[i] || ""}
+            onChange={e => {
+              const v = e.target.value.replace(/\D/g, "");
+              if (!v && val[i]) { set(val.slice(0,i) + val.slice(i+1)); return; }
+              if (!v) return;
+              set(val.slice(0,i) + v[0] + val.slice(i+1));
+              if (i < 5) document.getElementById(`${prefix}-${i+1}`)?.focus();
+            }}
+            onKeyDown={e => { if (e.key === "Backspace" && !val[i] && i > 0) document.getElementById(`${prefix}-${i-1}`)?.focus(); }}
+            style={{ width:44, height:52, textAlign:"center", fontSize:20, fontWeight:700, background:isDark?"#07070a":"#f8f9fb", border:`1.5px solid ${highlight !== undefined ? (highlight ? "#5cb87a" : C.red) : (val[i] ? (isDark?"#c9a84c44":"#2563b033") : C.line)}`, borderRadius:8, color:C.text, outline:"none", boxSizing:"border-box" as const, transition:"all 0.2s", WebkitTextFillColor:C.text }} />
+        ))}
+      </div>
+    );
+
     const [settingsPage, setSettingsPage] = useState<string|null>(null);
 
     const sections = [
@@ -1233,7 +1265,7 @@ export default function Dashboard() {
     /* Sub-page header */
     const PageHeader = ({ title, icon }: { title: string; icon: string }) => (
       <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:20 }}>
-        <button onClick={() => setSettingsPage(null)} style={{ background:"none", border:`1px solid ${C.line}`, borderRadius:8, padding:"8px 14px", cursor:"pointer", color:C.gold, fontSize:13, fontWeight:600 }}>← Back</button>
+        <button onClick={() => { setSettingsPage(null); setEmailVerified(false); setVerifyEmail(""); setVerifyErr(""); setCurPin(""); setNewPin(""); setConfPin(""); }} style={{ background:"none", border:`1px solid ${C.line}`, borderRadius:8, padding:"8px 14px", cursor:"pointer", color:C.gold, fontSize:13, fontWeight:600 }}>← Back</button>
         <span style={{ fontSize:20 }}>{icon}</span>
         <span style={{ fontSize:18, fontWeight:700, color:C.text }}>{title}</span>
       </div>
@@ -1243,17 +1275,43 @@ export default function Dashboard() {
     if (settingsPage === "pin") return (
       <div style={{ maxWidth:480 }}>
         <PageHeader title="Security" icon="🔒" />
-        <SCard title="Change PIN">
-          {pinInput(curPin, setCurPin, "Current PIN")}
-          {pinInput(newPin, setNewPin, "New PIN")}
-          {pinInput(confPin, setConfPin, "Confirm New PIN", confPin.length === 6 ? pinsMatch : undefined)}
-          {confPin.length === 6 && !pinsMatch && <p style={{ color:C.red, fontSize:11, marginBottom:8 }}>PINs do not match</p>}
-          {pinMsg && <p style={{ color:pinMsg.ok ? "#5cb87a" : C.red, fontSize:12, marginBottom:8 }}>{pinMsg.text}</p>}
-          <button onClick={handleChangePin} disabled={!pinsMatch || curPin.length !== 6 || pinLoading}
-            style={{ padding:"10px 24px", background:pinsMatch && curPin.length === 6 ? C.gold : C.line, border:"none", borderRadius:6, color:pinsMatch && curPin.length === 6 ? (isDark?"#07070a":"#fff") : C.dim, fontSize:13, fontWeight:700, cursor:pinsMatch && curPin.length === 6 ? "pointer" : "not-allowed" }}>
-            {pinLoading ? "Changing..." : "Change PIN"}
-          </button>
-        </SCard>
+        {!emailVerified ? (
+          <SCard title="Verify Identity">
+            <p style={{ fontSize:12, color:C.muted, marginBottom:16 }}>Enter your registered contact email to verify your identity before changing your PIN.</p>
+            <div style={{ marginBottom:14 }}>
+              <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Contact Email</label>
+              <input value={verifyEmail} onChange={e => setVerifyEmail(e.target.value)} placeholder="As registered with AusClear" type="email"
+                style={{ width:"100%", padding:"12px 14px", background:isDark?"#07070a":"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:14, outline:"none", boxSizing:"border-box" as const, WebkitTextFillColor:C.text }}
+                onKeyDown={e => { if (e.key === "Enter") handleVerifyEmail(); }} />
+            </div>
+            {verifyErr && <p style={{ color:C.red, fontSize:11, marginBottom:8 }}>{verifyErr}</p>}
+            <button onClick={handleVerifyEmail} disabled={!verifyEmail.includes("@")}
+              style={{ padding:"11px 28px", background:verifyEmail.includes("@") ? C.gold : C.line, border:"none", borderRadius:8, color:verifyEmail.includes("@") ? (isDark?"#07070a":"#fff") : C.dim, fontSize:13, fontWeight:700, cursor:verifyEmail.includes("@") ? "pointer" : "not-allowed" }}>
+              Verify
+            </button>
+          </SCard>
+        ) : (
+          <SCard title="Change PIN">
+            <div style={{ marginBottom:18 }}>
+              <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Current PIN</label>
+              {pinBoxes(curPin, setCurPin, "cur")}
+            </div>
+            <div style={{ marginBottom:18 }}>
+              <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>New PIN</label>
+              {pinBoxes(newPin, setNewPin, "new")}
+            </div>
+            <div style={{ marginBottom:18 }}>
+              <label style={{ display:"block", fontSize:10, color:C.muted, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Confirm New PIN</label>
+              {pinBoxes(confPin, setConfPin, "conf", confPin.length === 6 ? pinsMatch : undefined)}
+            </div>
+            {confPin.length === 6 && !pinsMatch && <p style={{ color:C.red, fontSize:11, marginBottom:8 }}>PINs do not match</p>}
+            {pinMsg && <p style={{ color:pinMsg.ok ? "#5cb87a" : C.red, fontSize:12, marginBottom:8 }}>{pinMsg.text}</p>}
+            <button onClick={handleChangePin} disabled={!pinsMatch || curPin.length !== 6 || pinLoading}
+              style={{ padding:"11px 28px", background:pinsMatch && curPin.length === 6 ? C.gold : C.line, border:"none", borderRadius:8, color:pinsMatch && curPin.length === 6 ? (isDark?"#07070a":"#fff") : C.dim, fontSize:13, fontWeight:700, cursor:pinsMatch && curPin.length === 6 ? "pointer" : "not-allowed" }}>
+              {pinLoading ? "Changing..." : "Change PIN"}
+            </button>
+          </SCard>
+        )}
       </div>
     );
 
