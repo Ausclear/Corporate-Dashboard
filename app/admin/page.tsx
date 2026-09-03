@@ -251,7 +251,7 @@ export default function AdminPage() {
                 <textarea defaultValue={data?.settings?.maintenance_message || ""}
                   onBlur={e => updateMessage(e.target.value)}
                   rows={3}
-                  style={{ width:"100%", padding:"10px 12px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:C.text, fontSize:12, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit" }} />
+                  style={{ width:"100%", padding:"10px 12px", background:"#f8f9fb", border:`1px solid ${C.line}`, borderRadius:8, color:"#1a1a2e", fontSize:12, outline:"none", boxSizing:"border-box", resize:"vertical", fontFamily:"inherit", WebkitTextFillColor:"#1a1a2e" }} />
               </div>
             </div>
 
