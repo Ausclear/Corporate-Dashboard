@@ -328,6 +328,12 @@ export default function Dashboard() {
     if (!mounted) return;
     const acct = sessionStorage.getItem("account_number");
     if (!acct) { router.push("/login"); return; }
+    // Check maintenance mode first (skip for admin)
+    if (sessionStorage.getItem("admin_impersonate") !== "1") {
+      fetch("/api/admin/maintenance-check").then(r => r.json()).then(d => {
+        if (d.active) { sessionStorage.removeItem("account_number"); router.push("/maintenance"); return; }
+      }).catch(() => {});
+    }
     fetch(`/api/dashboard/data?account_number=${encodeURIComponent(acct)}`).then(r => r.json())
       .then(d => {
         if (d.error) { setError(d.error); sessionStorage.removeItem("account_number"); }

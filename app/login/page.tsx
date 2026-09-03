@@ -14,10 +14,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Check saved theme, fallback to system preference
     const saved = localStorage.getItem("ausclear_theme");
     if (saved) { setIsDark(saved === "dark"); }
     else { setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches); }
+    // Check maintenance
+    fetch("/api/admin/maintenance-check").then(r => r.json()).then(d => {
+      if (d.active) router.replace("/maintenance");
+    }).catch(() => {});
   }, []);
 
   const valid = acct.trim().length >= 4 && name.trim().length >= 2 && pin.length === 6;
