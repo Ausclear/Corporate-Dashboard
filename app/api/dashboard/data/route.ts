@@ -206,7 +206,15 @@ export async function GET(request: Request) {
     }
 
     const buildNominee = (ne: any) => {
-      const stage = ne.Deal_Stage || "";
+      /* Pull revalidation date and LIVE stage from linked deal */
+      const linkedDeal = (ne.Linked_Deal?.id && dealById[ne.Linked_Deal.id])
+        || (ne.Linked_Deal?.name && dealByName[ne.Linked_Deal.name])
+        || null;
+      const revalDate = linkedDeal?.Revalidation_Date || null;
+
+      // Live deal stage takes precedence — the Deal_Stage copy on the
+      // nominee record goes stale when the pipeline is updated in Zoho
+      const stage = linkedDeal?.Stage || ne.Deal_Stage || "";
 
       /* If no deal stage, check if this nominee exists as a lead — flag on onboarding_status */
       let onboardStatus = ne.Onboarding_Status || "";
@@ -216,12 +224,6 @@ export async function GET(request: Request) {
         const isLead = (email && leadByEmail[email]) || (name && leadByName[name]);
         if (isLead) onboardStatus = "Awaiting Application Form";
       }
-
-      /* Pull revalidation date from linked deal */
-      const linkedDeal = (ne.Linked_Deal?.id && dealById[ne.Linked_Deal.id])
-        || (ne.Linked_Deal?.name && dealByName[ne.Linked_Deal.name])
-        || null;
-      const revalDate = linkedDeal?.Revalidation_Date || null;
 
       return {
         id:                     ne.id,
